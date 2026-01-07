@@ -1,5 +1,31 @@
 $(document).ready(function () {
 
+    // --- CHECK MODEL STATUS ON LOAD ---
+    $.get('/status', function (data) {
+        if (!data.deepfake_loaded || !data.nlp_loaded) {
+            let errorMsg = 'One or more AI models failed to initialize.';
+            if (!data.deepfake_loaded && data.deepfake_error) {
+                errorMsg += '\n\nDeepfake Model Error: ' + data.deepfake_error;
+            }
+            if (!data.nlp_loaded && data.nlp_error) {
+                errorMsg += '\n\nNLP Model Error: ' + data.nlp_error;
+            }
+            $('#errorMessage').text(errorMsg);
+            $('#errorModal').removeClass('hidden');
+            // Disable all functionality until models are loaded
+            $('.cyber-btn').prop('disabled', true);
+        }
+    }).fail(function () {
+        $('#errorMessage').text('Failed to connect to the server. Please ensure the backend is running.');
+        $('#errorModal').removeClass('hidden');
+        $('.cyber-btn').prop('disabled', true);
+    });
+
+    $('#closeError').click(function () {
+        // User acknowledges the error - they can still try to use the app
+        $('#errorModal').addClass('hidden');
+    });
+
     // --- CANVAS BACKGROUND (The "Running" Visual) ---
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');

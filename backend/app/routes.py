@@ -12,15 +12,23 @@ import tempfile
 
 main = Blueprint('main', __name__)
 
-# --- Load NLP Model ---
+
+nlp_model = None
+nlp_vectorizer = None
+nlp_error = None
+
 try:
-    with open('models/fake_news/model.pkl', 'rb') as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    models_dir = os.path.join(base_dir, '..', 'models')
+    
+    with open(os.path.join(models_dir, 'fake_news/model.pkl'), 'rb') as f:
         nlp_model = pickle.load(f)
-    with open('models/fake_news/vectorizer.pkl', 'rb') as f:
+    with open(os.path.join(models_dir, 'fake_news/vectorizer.pkl'), 'rb') as f:
         nlp_vectorizer = pickle.load(f)
     print("NLP Model loaded.")
 except Exception as e:
     print(f"Error loading NLP model: {e}")
+    nlp_error = str(e)
     nlp_model = None
 
 # --- Define & Load Deepfake Model ---
@@ -43,24 +51,32 @@ class DeepfakeCNN(nn.Module):
         return x
 
 deepfake_model = DeepfakeCNN()
+deepfake_error = None
+
 try:
-    deepfake_model.load_state_dict(torch.load('models/deepfake/model.pth'))
+    deepfake_model.load_state_dict(torch.load(os.path.join(models_dir, 'deepfake/model.pth'), map_location=torch.device('cpu')))
     deepfake_model.eval()
     print("Deepfake Model loaded.")
 except Exception as e:
     print(f"Error loading Deepfake model: {e}")
+    deepfake_error = str(e)
     deepfake_model = None
 
 # --- Routes ---
 
+@main.route('/status')
+def status():
+    """Check if models are loaded"""
+    return jsonify({
+        'deepfake_loaded': deepfake_model is not None,
+        'nlp_loaded': nlp_model is not None,
+        'deepfake_error': deepfake_error,
+        'nlp_error': nlp_error
+    })
+
 @main.route('/')
 def index():
     return render_template('index.html')
-
-@main.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(main.root_path, 'static'),
-                               'favicon.svg', mimetype='image/vnd.microsoft.icon')
 
 @main.route('/predict_news', methods=['POST'])
 def predict_news():
@@ -73,7 +89,7 @@ def predict_news():
         prediction = nlp_model.predict(vectorized_text)[0] # "FAKE" or "REAL"
         return jsonify({'result': prediction})
     else:
-        return jsonify({'result': 'Error', 'message': 'Model not loaded'})
+        return jsonify({'result': 'Error', 'message': f'Model not loaded: {nlp_error}'})
 
 @main.route('/predict_deepfake', methods=['POST'])
 def predict_deepfake():
@@ -160,5 +176,5 @@ def predict_deepfake():
             return jsonify({'result': 'Error', 'message': str(e)})
     else:
         # Fallback if model failed to load
-        return jsonify({'result': 'Unknown', 'message': 'Model not loaded'})
+        return jsonify({'result': 'Unknown', 'message': f'Model not loaded: {deepfake_error}'})
 

@@ -29,6 +29,15 @@
         <h1 class="main-title glitched" data-text="TRUTH DETECTOR">TRUTH DETECTOR</h1>
         <p class="subtitle">AI-POWERED AUTHENTICITY VERIFICATION</p>
 
+        <!-- Error Modal -->
+        <div id="errorModal" class="error-modal hidden">
+            <div class="error-modal-content">
+                <h2>Model not loaded</h2>
+                <p id="errorMessage">One or more AI models failed to initialize.</p>
+                <button id="closeError" class="cyber-btn">Close</button>
+            </div>
+        </div>
+
         <div class="floating-interface">
             <div class="control-deck">
                 <button class="deck-btn active" data-target="text-panel">TEXT_SCAN</button>
