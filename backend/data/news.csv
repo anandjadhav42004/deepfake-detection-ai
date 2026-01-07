@@ -1,0 +1,7 @@
+title,text,label
+"Fake News 1","This is a fake news article.",FAKE
+"Real News 1","This is a real news article.",REAL
+"Fake News 2","Another fake article with misleading info.",FAKE
+"Real News 2","Another valid news source confirming events.",REAL
+"Fake News 3","Aliens have landed in Times Square!",FAKE
+"Real News 3","Stock market closes at record high today.",REAL

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Gravity | Neural Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+
+    <div class="space-background">
+        <canvas id="bgCanvas"></canvas>
+    </div>
+
+    <nav class="navbar">
+        <div class="logo">ANTI<span class="highlight">GRAVITY</span> <span class="version">v2.0</span></div>
+        <div class="status-pill">SYSTEM ONLINE</div>
+    </nav>
+
+    <main class="main-container">
+        <h1 class="main-title glitched" data-text="TRUTH DETECTOR">TRUTH DETECTOR</h1>
+        <p class="subtitle">AI-POWERED AUTHENTICITY VERIFICATION</p>
+
+        <div class="floating-interface">
+            <div class="control-deck">
+                <button class="deck-btn active" data-target="text-panel">TEXT_SCAN</button>
+                <button class="deck-btn" data-target="image-panel">MEDIA_SCAN</button>
+                <div class="deck-slider"></div>
+            </div>
+
+            <div class="display-port">
+                <!-- Text Panel -->
+                <div id="text-panel" class="panel active">
+                    <div class="terminal-input">
+                        <div class="scan-line"></div>
+                        <textarea id="newsInput" placeholder="// ENTER DATA STREAM FOR ANALYSIS..."></textarea>
+                    </div>
+                    <div class="panel-footer">
+                        <span class="char-count">0 BYTES</span>
+                        <button id="analyzeTextBtn" class="cyber-btn">INITIATE SCAN</button>
+                    </div>
+                </div>
+
+                <!-- Image Panel -->
+                <div id="image-panel" class="panel">
+                    <div class="upload-grid" id="dropZone">
+                        <div class="grid-content">
+                            <svg class="holo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                            </svg>
+                            <h3>UPLOAD_TARGET</h3>
+                            <p>DROP FILE OR CLICK TO ACCESS DRIVE</p>
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*,video/*" hidden>
+
+                        <div id="previewContainer" class="hidden">
+                            <img id="imagePreview" src="" alt="Target" class="hidden">
+                            <video id="videoPreview" controls class="hidden"
+                                style="width:100%; height:100%; object-fit:contain;"></video>
+                            <div class="scanner-overlay"></div>
+                            <button id="clearImage" class="close-btn">ABORT</button>
+                        </div>
+                    </div>
+                    <button id="analyzeImageBtn" class="cyber-btn hidden full-width">EXECUTE DIAGNOSTIC</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Overlay -->
+        <div id="resultOverlay" class="result-overlay hidden">
+            <div class="result-modal">
+                <div class="loader hidden">
+                    <div class="ring"></div>
+                    <div class="ring"></div>
+                    <div class="ring"></div>
+                    <p>PROCESSING NEURAL PATHWAYS...</p>
+                </div>
+
+                <div class="result-content hidden">
+                    <div class="verdict-ring" id="verdictRing">
+                        <div class="inner-score" id="confidenceVal">0%</div>
+                    </div>
+                    <h2 class="verdict-title" id="verdictTitle">UNKNOWN</h2>
+                    <p class="verdict-desc" id="verdictDesc">AWAITING INPUT</p>
+                    <button id="closeResult" class="cyber-btn secondary">RESET SYSTEM</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="/static/js/script.js"></script>
+</body>
+
+</html>
