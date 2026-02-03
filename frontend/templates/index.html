@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@100;300;400;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -16,18 +16,60 @@
 
 <body>
 
-    <div class="space-background">
-        <canvas id="bgCanvas"></canvas>
+    <div class="matrix-background">
+        <canvas id="matrixCanvas"></canvas>
     </div>
+    <div class="space-background"></div>
+    <div class="grid-background"></div>
+    <div class="grain-overlay"></div>
 
     <nav class="navbar">
         <div class="logo">ANTI<span class="highlight">GRAVITY</span> <span class="version">v2.0</span></div>
         <div class="status-pill">SYSTEM ONLINE</div>
     </nav>
 
-    <main class="main-container">
-        <h1 class="main-title glitched" data-text="TRUTH DETECTOR">TRUTH DETECTOR</h1>
-        <p class="subtitle">AI-POWERED AUTHENTICITY VERIFICATION</p>
+    <!-- Landing Page Segment -->
+    <div id="landingPage" class="landing-page">
+        <div class="hero-section">
+            <h1 class="hero-title" data-text="AUTHENTICITY_DEFINED">AUTHENTICITY_<span>DEFINED</span></h1>
+            <p class="hero-tagline">Advanced Neural Verification for the Digital Frontier.</p>
+
+            <div class="entry-points">
+                <button class="scan-entry-btn text-entry" data-target="text-panel">
+                    <span class="btn-glitch"></span>
+                    <span class="btn-content">INITIATE_TEXT_SCAN</span>
+                </button>
+                <button class="scan-entry-btn media-entry" data-target="image-panel">
+                    <span class="btn-glitch"></span>
+                    <span class="btn-content">INITIATE_MEDIA_SCAN</span>
+                </button>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="f-icon">◈</span>
+                    <h3>LINGUISTIC_AI</h3>
+                    <p>Semantic anomaly detection across multi-lingual data streams.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="f-icon">◈</span>
+                    <h3>DEEP_VISION</h3>
+                    <p>Frame-by-frame forensic analysis of media artifacts.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="f-icon">◈</span>
+                    <h3>FORENSIC_META</h3>
+                    <p>Hardware fingerprinting and metadata integrity logs.</p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-note">ANTIGRAVITY SYSTEMS // NEURAL_NET_V2.0.4</div>
+    </div>
+
+    <main id="appContainer" class="main-container hidden">
+        <div class="back-container">
+            <button id="backToLanding" class="back-btn">RETURN_TO_BASE</button>
+        </div>
 
         <!-- Error Modal -->
         <div id="errorModal" class="error-modal hidden">
@@ -38,68 +80,169 @@
             </div>
         </div>
 
-        <div class="floating-interface">
-            <div class="control-deck">
-                <button class="deck-btn active" data-target="text-panel">TEXT_SCAN</button>
-                <button class="deck-btn" data-target="image-panel">MEDIA_SCAN</button>
-                <div class="deck-slider"></div>
-            </div>
+        <!-- Text Scanner Page -->
+        <div id="textScannerPage" class="scanner-page hidden">
+            <h1 class="main-title glitched" data-text="LINGUISTIC_SCANNER">LINGUISTIC_SCANNER</h1>
+            <!-- The 'subtitle' class here triggers the animation defined in your CSS -->
+            <p class="subtitle text-accent">NEURAL TEXT ANALYSIS & VERIFICATION SYSTEM</p>
 
-            <div class="display-port">
-                <!-- Text Panel -->
-                <div id="text-panel" class="panel active">
-                    <div class="terminal-input">
-                        <div class="scan-line"></div>
-                        <textarea id="newsInput" placeholder="// ENTER DATA STREAM FOR ANALYSIS..."></textarea>
+            <div class="dedicated-box text-theme">
+                <div class="terminal-input">
+                    <div class="scan-line"></div>
+                    <textarea id="newsInput"
+                        placeholder="// PASTE TRANSACTIONAL MESSAGE, NEWS ARTICLE, OR SOCIAL FEED..."></textarea>
+                </div>
+                <div class="panel-footer">
+                    <div class="sample-prompts">
+                        <span class="label">TRY_SAMPLE:</span>
+                        <button class="sample-btn" data-sample="scam">SCAM_MSG</button>
+                        <button class="sample-btn" data-sample="news">FAKE_NEWS</button>
+                        <button class="sample-btn" data-sample="ai">AI_TEXT</button>
                     </div>
-                    <div class="panel-footer">
+                    <div class="footer-actions">
                         <span class="char-count">0 BYTES</span>
                         <button id="analyzeTextBtn" class="cyber-btn">INITIATE SCAN</button>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Image Panel -->
-                <div id="image-panel" class="panel">
-                    <div class="upload-grid" id="dropZone">
-                        <div class="grid-content">
-                            <svg class="holo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-                            </svg>
-                            <h3>UPLOAD_TARGET</h3>
-                            <p>DROP FILE OR CLICK TO ACCESS DRIVE</p>
-                        </div>
-                        <input type="file" id="imageInput" accept="image/*,video/*" hidden>
+        <!-- Media Scanner Page -->
+        <div id="mediaScannerPage" class="scanner-page hidden">
+            <h1 class="main-title glitched" data-text="VISION_FORENSICS">VISION_FORENSICS</h1>
+            <!-- The 'subtitle' class here also triggers the left-to-right movement -->
+            <p class="subtitle media-accent">DEEPFAKE DETECTION & MEDIA INTEGRITY LAB</p>
 
-                        <div id="previewContainer" class="hidden">
-                            <img id="imagePreview" src="" alt="Target" class="hidden">
-                            <video id="videoPreview" controls class="hidden"
-                                style="width:100%; height:100%; object-fit:contain;"></video>
-                            <div class="scanner-overlay"></div>
-                            <button id="clearImage" class="close-btn">ABORT</button>
+            <div class="dedicated-box media-theme">
+                <div class="upload-grid" id="dropZone">
+                    <div class="grid-content">
+                        <div class="glow-ring"></div>
+                        <svg class="holo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                        </svg>
+                        <h3>UPLOAD_TARGET</h3>
+                        <p>DRAG & DROP OR CLICK TO BROWSE</p>
+                        <div class="meta-preview">
+                            <span>AI_DETECTION: ENABLED</span>
+                            <span>METADATA_EXTRACTOR: ACTIVE</span>
                         </div>
                     </div>
-                    <button id="analyzeImageBtn" class="cyber-btn hidden full-width">EXECUTE DIAGNOSTIC</button>
+                    <input type="file" id="imageInput" accept="image/*,video/*" hidden>
+
+                    <div id="previewContainer" class="hidden">
+                        <img id="imagePreview" src="" alt="Target" class="hidden">
+                        <video id="videoPreview" controls class="hidden"
+                            style="width:100%; height:100%; object-fit:contain;"></video>
+                        <div class="scanner-overlay"></div>
+                        <button id="clearImage" class="close-btn">ABORT</button>
+                    </div>
+                </div>
+                <button id="analyzeImageBtn" class="cyber-btn hidden full-width">EXECUTE DIAGNOSTIC</button>
+            </div>
+        </div>
+
+        <!-- Results Display -->
+        <div id="resultsDisplay" class="results-display hidden">
+            <div class="result-card">
+                <div class="result-header">
+                    <div class="status-indicator">
+                        <span class="pulse-dot"></span>
+                        <span id="resStatusLabel">ANALYSIS COMPLETE</span>
+                    </div>
+                    <div class="score-container">
+                        <div class="score-radial">
+                            <svg viewBox="0 0 36 36" class="circular-chart">
+                                <path class="circle-bg"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="scoreCircle" class="circle" stroke-dasharray="0, 100"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <div id="resScoreText" class="score-text">0%</div>
+                        </div>
+                        <span class="score-label">TRUTH PROBABILITY</span>
+                    </div>
+                </div>
+
+                <div class="metadata-bar">
+                    <span class="meta-tag">SCAN_ID: <span id="scanId">#AG-8122-FX</span></span>
+                    <span class="meta-tag">TIMESTAMP: <span id="scanTime">2026-02-03 17:52</span></span>
+                    <span class="meta-tag">NODE: <span class="status-active">INFERENCE_READY</span></span>
+                </div>
+
+                <div class="verdict-section">
+                    <h2 id="resVerdictTitle" class="verdict-glitch">LIKELY TRUE</h2>
+                    <p id="resVerdictReason">Neural patterns indicate high structural integrity in the provided data
+                        stream.</p>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-block" title="Confidence of the primary neural inference layer">
+                        <div class="metric-label">INFERENCE_CONFIDENCE</div>
+                        <div class="metric-bar-container">
+                            <div class="metric-bar" id="inferenceBar" style="width: 85%"></div>
+                        </div>
+                        <div class="metric-value" id="inferenceVal">85%</div>
+                    </div>
+                    <div class="metric-block" title="Consistency of detected patterns across multiple semantic layers">
+                        <div class="metric-label">PATTERN_CONSISTENCY</div>
+                        <div class="metric-bar-container">
+                            <div class="metric-bar" id="consistencyBar" style="width: 92%"></div>
+                        </div>
+                        <div class="metric-value" id="consistencyVal">92%</div>
+                    </div>
+                    <div class="metric-block" title="Raw signal strength of the captured data stream">
+                        <div class="metric-label">SIGNAL_STRENGTH</div>
+                        <div class="metric-bar-container">
+                            <div class="metric-bar" id="signalBar" style="width: 78%"></div>
+                        </div>
+                        <div class="metric-value" id="signalVal">78%</div>
+                    </div>
+                    <div class="metric-block" title="Probability of structural fabrication within the source">
+                        <div class="metric-label">ANOMALY_INDEX</div>
+                        <div class="metric-bar-container">
+                            <div class="metric-bar risk" id="anomalyBar" style="width: 12%"></div>
+                        </div>
+                        <div class="metric-value" id="anomalyVal">12%</div>
+                    </div>
+                </div>
+
+                <div class="result-actions">
+                    <button class="cyber-btn small" onclick="window.print()">GENERATE_PDF_REPORT</button>
+                    <button id="whyFlaggedBtn" class="cyber-btn small">EXPAND_INTELLIGENCE_LOGS</button>
+                </div>
+
+                <div id="explanationContent" class="hidden">
+                    <div class="analysis-details">
+                        <h4>FORENSIC_EXAMINATION_LOGS:</h4>
+                        <ul id="analysisPoints">
+                            <!-- Dynamic points added via JS -->
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="professional-footer">
+                    <div class="footer-meta">
+                        <span>CLASSIFICATION: CONFIDENTIAL</span>
+                        <span>SYSTEM: ANTIGRAVITY_v2.0_CORE</span>
+                    </div>
+                    This neural analysis is compliant with forensic linguistic & vision standards.
                 </div>
             </div>
         </div>
 
-        <!-- Result Overlay -->
+        <!-- Processing Overlay -->
         <div id="resultOverlay" class="result-overlay hidden">
             <div class="result-modal">
-                <div class="loader hidden">
-                    <div class="ring"></div>
-                    <div class="ring"></div>
-                    <div class="ring"></div>
-                    <p>PROCESSING NEURAL PATHWAYS...</p>
-                </div>
-
-                <div class="result-content hidden">
-                    <div class="verdict-ring" id="verdictRing">
-                        <div class="inner-score" id="confidenceVal">0%</div>
+                <div class="loader">
+                    <div class="scan-animation">
+                        <div class="moving-bar"></div>
                     </div>
-                    <h2 class="verdict-title" id="verdictTitle">UNKNOWN</h2>
-                    <p class="verdict-desc" id="verdictDesc">AWAITING INPUT</p>
-                    <button id="closeResult" class="cyber-btn secondary">RESET SYSTEM</button>
+                    <div class="ring-loader">
+                        <div class="ring"></div>
+                        <div class="ring"></div>
+                        <div class="ring"></div>
+                    </div>
+                    <p id="systemMessage">INITIALIZING ANALYSIS...</p>
                 </div>
             </div>
         </div>

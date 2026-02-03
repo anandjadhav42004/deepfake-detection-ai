@@ -1,0 +1,18 @@
+{
+  "name": "deepfake-detection-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for deepfake detection and fake news identification",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx http-server . -p 3000 -c-1 --gzip",
+    "dev": "npx http-server . -p 3000 -c-1 -o --gzip"
+  },
+  "keywords": [
+    "deepfake",
+    "detection",
+    "fake-news"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {}
+}

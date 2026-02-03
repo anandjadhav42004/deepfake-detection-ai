@@ -85,9 +85,26 @@ def predict_news():
         return jsonify({'result': 'Error', 'message': 'No text provided'})
     
     if nlp_model:
-        vectorized_text = nlp_vectorizer.transform([text])
-        prediction = nlp_model.predict(vectorized_text)[0] # "FAKE" or "REAL"
-        return jsonify({'result': prediction})
+        try:
+            vectorized_text = nlp_vectorizer.transform([text])
+            prediction = nlp_model.predict(vectorized_text)[0] # "FAKE" or "REAL"
+            
+            # Estimate confidence using decision function
+            decision = nlp_model.decision_function(vectorized_text)[0]
+            # Sigmoid to get a 0-1 score
+            prob_real = 1 / (1 + np.exp(-decision))
+            
+            if prediction == "FAKE":
+                confidence = (1 - prob_real) * 100
+            else:
+                confidence = prob_real * 100
+                
+            return jsonify({
+                'result': prediction,
+                'confidence': f"{confidence:.2f}"
+            })
+        except Exception as e:
+            return jsonify({'result': 'Error', 'message': str(e)})
     else:
         return jsonify({'result': 'Error', 'message': f'Model not loaded: {nlp_error}'})
 
@@ -167,7 +184,7 @@ def predict_deepfake():
             
             # Threshold
             result = "FAKE" if score > 0.5 else "REAL"
-            confidence = f"{score*100:.2f}% Fake Probability"
+            confidence = f"{score*100:.2f}"
             
             return jsonify({'result': result, 'confidence': confidence})
 
