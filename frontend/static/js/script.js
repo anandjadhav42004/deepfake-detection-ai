@@ -286,59 +286,22 @@ $(document).ready(function () {
         $.post('/predict_news', { text: text }, function (data) {
             if (data.result === 'Error') { alert(data.message); resetProcess(); return; }
 
-            const isFake = data.result === 'FAKE';
-            let backendConfidence = parseFloat(data.confidence) || 50.0;
+            const isFake = (data.result === 'FAKE');
+            let backendConfidence = parseFloat(data.confidence) || 0;
 
-            // Normalize to base Truth Score (0 = Fake, 100 = True)
-            let truthScore = isFake ? (100 - backendConfidence) : backendConfidence;
-
-            // --- INTERNAL DETERMINISTIC LOGIC REFINEMENT ---
-            const lowerText = text.toLowerCase();
-
-            // 1. Strong Fake Indicators
-            const fakeSignals = [
-                "share this with everyone", "forward to everyone", "media won't show you",
-                "media wouldn't show", "100% true", "breaking shocking news", "shocking",
-                "unbelievable", "secret", "urgent", "transfer money", "click here",
-                "personal data", "bank details", "win a prize"
-            ];
-
-            // 2. Trusted Source Indicators
-            const realSignals = [
-                "ndtv", "reuters", "bbc", "associated press", "ap news", "official statement",
-                "government", "ministry", "spokesperson", "according to officials",
-                "according to the report", "reported by", "verified source",
-                "statement from", "officials said"
-            ];
-
-            // 3. Neutral Journalism Language (Do not penalize, slight boost for professional tone)
-            const neutralQualifiers = ["may", "could", "potentially", "signals", "suggests"];
-
-            let penalty = 0;
-            let boost = 0;
-
-            // Apply Source & Fake Signal Heuristics
-            fakeSignals.forEach(s => { if (lowerText.includes(s)) penalty += 25; });
-            realSignals.forEach(s => { if (lowerText.includes(s)) boost += 20; });
-
-            // Journalism formatting detection (e.g. "New Delhi:" or "LONDON -")
-            const locationHeaderRegex = /^[A-Z][a-zA-Z\s]+[\:\-]\s/;
-            if (locationHeaderRegex.test(text)) boost += 15;
-
-            // Neutral word neutralizer
-            neutralQualifiers.forEach(s => { if (lowerText.includes(s)) boost += 2; });
-
-            // Apply Weighting
-            truthScore = truthScore - penalty + boost;
+            // --- THE REAL FIX ---
+            // Agar result FAKE hai, toh Truth Probability (score) kam honi chahiye.
+            // Agar backend confidence 90% deta hai for FAKE, toh truth score 10% hona chahiye.
+            let truthScore;
+            if (isFake) {
+                truthScore = backendConfidence > 50 ? (100 - backendConfidence) : backendConfidence;
+            } else {
+                truthScore = backendConfidence < 50 ? (100 - backendConfidence) : backendConfidence;
+            }
 
             // Cap the results
             truthScore = Math.max(2, Math.min(98, truthScore));
 
-            // Decisive Separation: Push clear signals out of the Uncertain (40-60) zone
-            if (penalty > 40 && truthScore > 35) truthScore = 32;
-            if (boost > 30 && truthScore < 65) truthScore = 68;
-
-            // Refined explanation logic (labels fixed as per core architecture)
             let explanation = {
                 summary: "",
                 details: []
@@ -444,12 +407,18 @@ $(document).ready(function () {
             success: function (data) {
                 if (data.result === 'Error') { alert(data.message); resetProcess(); return; }
 
-                const isFake = data.result === 'FAKE';
+                const isFake = (data.result === 'FAKE');
                 let backendConfidence = parseFloat(data.confidence) || 0;
 
-                // For media, truthScore is 100 - confidence if FAKE
-                // (Assuming confidence is probability of being fake if result is FAKE)
-                let truthScore = isFake ? (100 - backendConfidence) : backendConfidence;
+                // Truth Score logic for Images
+                let truthScore;
+                if (isFake) {
+                    truthScore = backendConfidence > 50 ? (100 - backendConfidence) : backendConfidence;
+                } else {
+                    truthScore = backendConfidence < 50 ? (100 - backendConfidence) : backendConfidence;
+                }
+
+                truthScore = Math.max(2, Math.min(98, truthScore));
 
                 const explanation = {
                     summary: "",
