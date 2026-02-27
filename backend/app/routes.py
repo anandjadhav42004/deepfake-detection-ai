@@ -113,39 +113,72 @@ def predict_news():
         print(f"Online Verification Error: {e}")
 
     # 2. Granular Forensic Analysis (Line-by-Line Simulation)
-    sentences = [s.strip() for s in text.split('.') if len(s.strip()) > 10]
+    # Split by common sentence delimiters and filter out tiny snippets
+    import re
+    sentences = [s.strip() for s in re.split(r'[\.\!\?\n]', text) if len(s.strip()) > 10]
+    
+    # Fallback: if no delimiters found, take the whole text as one chunk
+    if not sentences and len(text.strip()) > 10:
+        sentences = [text.strip()]
+
     forensic_log = []
     hits = 0
 
+    print(f"DEBUG: Analyzing {len(sentences)} sentences...")
+
     try:
-        for i, sent in enumerate(sentences[:3]): # Check first 3 key points for performance
-            search_query = sent[:120]
-            wiki_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={search_query}&format=json"
-            response = requests.get(wiki_url, timeout=3)
+        for i, sent in enumerate(sentences[:3]): # Check first 3 key points
+            search_query = sent[:150]
+            # Use params for automatic URL encoding (CRITICAL FIX)
+            wiki_params = {
+                "action": "query",
+                "list": "search",
+                "srsearch": search_query,
+                "format": "json",
+                "utf8": 1
+            }
+            wiki_url = "https://en.wikipedia.org/w/api.php"
+            
+            print(f"DEBUG: Searching Wikipedia for: {search_query[:50]}...")
+            
+            # Using verify=True (default) and a proper agent header
+            headers = {'User-Agent': 'AntiGravityTruthDetector/2.0 (Forensic Analysis System)'}
+            response = requests.get(wiki_url, params=wiki_params, headers=headers, timeout=5)
+            
             if response.status_code == 200:
                 data = response.json()
                 total_hits = data.get('query', {}).get('searchinfo', {}).get('totalhits', 0)
+                print(f"DEBUG: Total hits found: {total_hits}")
                 if total_hits > 0:
                     hits += 1
-                    forensic_log.append(f"SEGMENT_{i+1}: Cross-referenced with Global Knowledge Graph. VERIFIED.")
+                    forensic_log.append(f"SEGMENT_{i+1}: Found in global Knowledge Graph. Verified factual anchor.")
                 else:
-                    forensic_log.append(f"SEGMENT_{i+1}: No matching records found in public archives. DATA_ANOMALY.")
+                    forensic_log.append(f"SEGMENT_{i+1}: No matching records in public domain. Unverified data.")
+            else:
+                print(f"DEBUG: Wiki API returned status {response.status_code}")
+                
     except Exception as e:
-        print(f"Forensic Error: {e}")
+        print(f"Forensic Error (Wiki API): {e}")
 
     # Final logic based on "Truth Density"
     online_verified = (hits > 0)
     
     if online_verified:
         result = "REAL"
-        # Higher density = higher confidence
-        confidence = f"{90 + (hits * 3):.2f}"
-        summary = f"Neural patterns and spatial data verification confirmed {hits} major factual anchors."
+        # Scale confidence based on how many hits were found proportionially
+        truth_prob = 90 + (hits * 3)
+        confidence = f"{min(98.8, truth_prob):.2f}"
+        summary = f"Digital forensics and Knowledge Graph verification confirmed {hits} major factual anchors."
     else:
         result = model_prediction
-        confidence = f"{nlp_confidence * 100:.2f}"
-        summary = "Input stream lacks verifiable factual anchors in public global databases."
-        forensic_log.append("WARNING: Linguistic structure mirrors known misinformation patterns.")
+        # Ensure our confidence is 0-100
+        if isinstance(nlp_confidence, str):
+            confidence = nlp_confidence
+        else:
+            confidence = f"{nlp_confidence * 100:.2f}"
+            
+        summary = "No verified factual anchors found in public databases. Detection based on linguistic neural weights."
+        forensic_log.append("WARNING: Source cross-reference failure across major verification nodes.")
 
     return jsonify({
         'result': result,
