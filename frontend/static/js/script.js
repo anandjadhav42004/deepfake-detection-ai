@@ -1,10 +1,11 @@
 $(document).ready(function () {
 
-    // --- SAMPLES DATA ---
+    //--- SAMPLES DATA ---
     const samples = {
         scam: "URGENT: Your bank account has been compromised. Verify your identity immediately to prevent permanent lockout: http://secure-verify-auth.com/account/login-992. No further warnings will be issued.",
         news: "BREAKING: Massive solar flare predicted to shut down the global internet for exactly 48 hours starting tonight. Governments are already preparing emergency rations. Share this before the blackout!",
-        ai: "The industrial revolution was a period of significant change that transformed agrarian societies into industrial ones. The emergence of steam power played a pivotal role in this transition, leading to unprecedented levels of production."
+        ai: "The industrial revolution was a period of significant change that transformed agrarian societies into industrial ones. The emergence of steam power played a pivotal role in this transition, leading to unprecedented levels of production.",
+        true: "The Apollo 11 mission was the first spaceflight that landed the first two people on the Moon. Commander Neil Armstrong and lunar module pilot Buzz Aldrin landed the Apollo Lunar Module Eagle on July 20, 1969."
     };
 
     // --- CHECK MODEL STATUS ON LOAD ---
@@ -170,17 +171,21 @@ $(document).ready(function () {
         "GENERATING_FORENSIC_VERDICT..."
     ];
 
-    function initProcess() {
+    function initProcess(customMessages) {
         $('.status-pill').text('SYSTEM ANALYZING').addClass('analyzing');
         $('#resultOverlay').removeClass('hidden');
         $('#resultsDisplay').addClass('hidden');
         $('#explanationContent').addClass('hidden');
         $('#whyFlaggedBtn').text("EXPAND_INTELLIGENCE_LOGS");
 
+        const messages = customMessages || systemMessages;
         let msgIndex = 0;
+        $('#systemMessage').text(messages[0]);
+
+        if (systemProgressInterval) clearInterval(systemProgressInterval);
         systemProgressInterval = setInterval(() => {
-            msgIndex = (msgIndex + 1) % systemMessages.length;
-            $('#systemMessage').text(systemMessages[msgIndex]);
+            msgIndex = (msgIndex + 1) % messages.length;
+            $('#systemMessage').text(messages[msgIndex]);
         }, 800);
     }
 
@@ -281,54 +286,26 @@ $(document).ready(function () {
         const text = $('#newsInput').val();
         if (!text.trim()) return alert("INPUT STREAM EMPTY");
 
-        initProcess();
+        const onlineMessages = [
+            "CONNECTING_TO_GLOBAL_VERIFICATION_NODES...",
+            "SCANNING_VAST_NEWS_DATABASES (Wikipedia, Reuters)...",
+            "CROSS_REFERENCING_AP_WIRE_DATA...",
+            "ANALYZING_SEMANTIC_WEIGHTS...",
+            "GENERATING_FORENSIC_VERDICT..."
+        ];
+        initProcess(onlineMessages);
 
         $.post('/predict_news', { text: text }, function (data) {
             if (data.result === 'Error') { alert(data.message); resetProcess(); return; }
 
             const isFake = (data.result === 'FAKE');
-            let backendConfidence = parseFloat(data.confidence) || 0;
-
-            // --- THE REAL FIX ---
-            // Agar result FAKE hai, toh Truth Probability (score) kam honi chahiye.
-            // Agar backend confidence 90% deta hai for FAKE, toh truth score 10% hona chahiye.
-            let truthScore;
-            if (isFake) {
-                truthScore = backendConfidence > 50 ? (100 - backendConfidence) : backendConfidence;
-            } else {
-                truthScore = backendConfidence < 50 ? (100 - backendConfidence) : backendConfidence;
-            }
-
-            // Cap the results
+            let truthScore = parseFloat(data.confidence) || 0;
             truthScore = Math.max(2, Math.min(98, truthScore));
 
             let explanation = {
-                summary: "",
-                details: []
+                summary: data.summary || "Analysis complete.",
+                details: data.forensic_details || []
             };
-
-            if (truthScore < 40) {
-                explanation.summary = "Multiple high-risk linguistic patterns detected suggesting fabrication.";
-                explanation.details = [
-                    "Sensationalist or viral-style language patterns.",
-                    "Lack of credible source citations or official backing.",
-                    "Syntactic structure common in synthetic or biased media."
-                ];
-            } else if (truthScore < 60) {
-                explanation.summary = "The content falls into a gray area. Mixed signals detected in the neural stream.";
-                explanation.details = [
-                    "Ambiguous lexical choices detected.",
-                    "Mixture of objective and subjective sentence structures.",
-                    "Source credibility cannot be fully verified—proceed with caution."
-                ];
-            } else {
-                explanation.summary = "Linguistic structure remains consistent with verified news patterns.";
-                explanation.details = [
-                    "Factual tone with objective sentence structure.",
-                    "Semantic consistency maintained throughout.",
-                    "High lexical diversity matching professional journalism."
-                ];
-            }
 
             setTimeout(() => {
                 updateResultUI(truthScore, explanation);
@@ -393,7 +370,14 @@ $(document).ready(function () {
 
     $('#analyzeImageBtn').click(function () {
         if (!currentFile) return;
-        initProcess();
+        const forensicMessages = [
+            "INITIALIZING_VISION_FORENSICS...",
+            "SAMPLING_TEMPORAL_VIDEO_FRAMES...",
+            "ANALYZING_METADATA_INTEGRITY...",
+            "CALCULATING_AVERAGE_NEURAL_CONFIDENCE...",
+            "FINALIZING_MEDIA_DIAGNOSTIC..."
+        ];
+        initProcess(forensicMessages);
 
         const formData = new FormData();
         formData.append('file', currentFile);

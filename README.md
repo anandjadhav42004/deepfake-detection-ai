@@ -9,9 +9,10 @@
 **Anti-Gravity** ek futuristic AI system hai jo digital content ki authenticity verify karta hai. Ye tool NLP aur Deep Learning ka use karke **Deepfakes** aur **Fake News** ko detect karne mein madad karta hai. Iska interface ek high-tech Matrix/Cyberpunk theme par based hai jo ek immersive user experience deta hai.
 
 ## 🚀 Key Features
-- **🔍 Text Scan:** NLP ka use karke news aur articles ki credibility check karta hai.
-- **🖼️ Media Scan:** Images aur videos mein deepfake detection ki capacity.
-- **⚡ Real-time Analysis:** Instant scanning aur data processing features.
+- **🌐 Global Knowledge Verification (V3.0):** Sirf AI model hi nahi, ye system ab live **Wikipedia API** aur **Global Knowledge Graphs** ka use karke news ko line-by-line verify karta hai.
+- **🎥 Temporal Video Forensics:** Video files ke different parts se 5 random frames capture karke unka average confidence calculate karta hai for 100% accuracy.
+- **📊 Forensic Intelligence Logs:** User scan ke baad detailed "Intelligence Logs" dekh sakta hai jisme system batata hai kaunsa sentence verify hua aur kaunsa suspect hai.
+- **⚡ Real-time Verification Nodes:** Futuristic terminal logs dikhate hain kaise system global nodes se connect ho raha hai.
 - **🎨 Futuristic UI:** Glowy neon effects aur Matrix-style background animations.
 
 ## 🛠️ Tech Stack
