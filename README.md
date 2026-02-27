@@ -1,38 +1,73 @@
-# 🛸 Anti-Gravity: Truth Detector v2.0
-### **AI-Powered Authenticity Verification System**
+# 🛸 Anti-Gravity: Neural Verification System v3.0
+### **"In a world of synthetic reality, trust the code, not the pixels."**
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python) ![Flask](https://img.shields.io/badge/Flask-Framework-red?style=for-the-badge&logo=flask) ![UI](https://img.shields.io/badge/UI-Cyberpunk%20Matrix-green?style=for-the-badge)
+![GitHub last commit](https://img.shields.io/github/last-commit/anandjadhav42004/deepfake-detection-ai?style=for-the-badge&color=blue)
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)
+![Flask](https://img.shields.io/badge/Flask-Framework-red?style=for-the-badge&logo=flask)
+![Deep Learning](https://img.shields.io/badge/Neural-Network-green?style=for-the-badge)
+
+---
+
+## 🌌 Overview
+**Anti-Gravity** is a futuristic, state-of-the-art Deepfake and Fake News detection system. It combines specialized Neural Networks with live Global Knowledge Graph verification to distinguish between human-generated truth and AI-synthesized deception. 
+
+Wrapped in a high-performance **Cyberpunk-themed dashboard**, it offers a window into the future of digital forensics.
 
 ---
 
-## 🌟 Overview
-**Anti-Gravity** ek futuristic AI system hai jo digital content ki authenticity verify karta hai. Ye tool NLP aur Deep Learning ka use karke **Deepfakes** aur **Fake News** ko detect karne mein madad karta hai. Iska interface ek high-tech Matrix/Cyberpunk theme par based hai jo ek immersive user experience deta hai.
+## 🔥 Professional Features (v3.0)
 
-## 🚀 Key Features
-- **🌐 Global Knowledge Verification (V3.0):** Sirf AI model hi nahi, ye system ab live **Wikipedia API** aur **Global Knowledge Graphs** ka use karke news ko line-by-line verify karta hai.
-- **🎥 Temporal Video Forensics:** Video files ke different parts se 5 random frames capture karke unka average confidence calculate karta hai for 100% accuracy.
-- **📊 Forensic Intelligence Logs:** User scan ke baad detailed "Intelligence Logs" dekh sakta hai jisme system batata hai kaunsa sentence verify hua aur kaunsa suspect hai.
-- **⚡ Real-time Verification Nodes:** Futuristic terminal logs dikhate hain kaise system global nodes se connect ho raha hai.
-- **🎨 Futuristic UI:** Glowy neon effects aur Matrix-style background animations.
+### 🌐 1. Global Knowledge Verification
+The system doesn't just guess; it **knows**. Using the **Wikipedia API**, Anti-Gravity performs a granular, segment-by-segment cross-reference of any text input against the world's largest repository of human knowledge.
 
-## 🛠️ Tech Stack
-- **Frontend:** HTML5, CSS3 (Neon Animations), JavaScript (ES6+)
-- **Backend:** Python (Flask Framework)
-- **Machine Learning:** Scikit-learn, TensorFlow (Deepfake & NLP Models)
-- **Environment:** Virtualenv (.venv)
+### 🎥 2. Temporal Video Forensics
+Beyond static images, our **Vision Forensics Lab** uses OpenCV to perform temporal sampling. It extracts 5 frames across the video's timeline, analyzing inconsistencies in metadata and neural patterns to provide a unified truth-probability score.
 
-## 📁 Project Structure
-- `backend/`: Flask logic, ML models, aur datasets (`news.csv`).
-- `frontend/`: UI templates (`index.html`) aur static assets (CSS/JS).
-- `run.py`: Project ko start karne wali main file.
+### 📊 3. Forensic Intelligence Logs
+Transparency is key. After every scan, the **Intelligence Terminal** provides a line-by-line breakdown of the verification process, showing exactly which data segments were confirmed and which triggered neural anomalies.
 
-## ⚙️ How to Setup & Run
-1. **Repository Clone Karein:** `git clone https://github.com/YOUR_USERNAME/anti-gravity-truth-detector.git`
-2. **Virtual Env Banayein:** `python -m venv .venv`
-3. **Env Activate Karein:** `source .venv/bin/activate` (Mac/Linux) ya `.venv\Scripts\activate` (Windows)
-4. **Library Install Karein:** `pip install -r backend/requirements.txt`
-5. **Run Karein:** `python backend/run.py`
-6. **Browser Khulein:** `http://127.0.0.1:5000` par teleport karein!
+### ⚡ 4. Real-time Verification Nodes
+The UI simulates a live connection to global verification nodes, providing an immersive "mission control" experience while the backend crunching massive feature tensors.
 
 ---
-**Built with ❤️ for the Future of Web Security.**
+
+## 🛠️ Cyber-Stack
+- **Neural Engine:** PyTorch (Vision), Scikit-Learn (NLP)
+- **Vision Lab:** OpenCV (Temporal Frame Sampling)
+- **Knowledge Core:** Wikipedia Rest API
+- **Terminal Interface:** Vanilla JS (Matrix Digital Rain, Glitch Motion)
+- **Infrastructure:** Flask (Python)
+
+---
+
+## 📁 Neural Repository Structure
+- `backend/`: The "Brain". Contains AI model weights, route logic, and API connectors.
+- `frontend/`: The "Interface". Glassmorphism designs and Matrix-based animations.
+- `run.py`: The ignition sequence for the local environment.
+
+---
+
+## ⚙️ Deployment Protocol
+1. **Clone the Source:**
+   ```bash
+   git clone https://github.com/anandjadhav42004/deepfake-detection-ai.git
+   ```
+2. **Initialize Virtual Env:**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Mac/Linux
+   ```
+3. **Install Core Tensors:**
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+4. **Ignite the System:**
+   ```bash
+   python backend/run.py
+   ```
+5. **Access the Future:** Teleport to `http://localhost:5001`.
+
+---
+
+### **🛡️ Built for the Guardians of Digital Truth.**
+*Developed with Neural Precision by [Anand Jadhav](https://github.com/anandjadhav42004).*
