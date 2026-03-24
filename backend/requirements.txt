@@ -1,7 +1,7 @@
 Flask
 scikit-learn
 pandas
-numpy
+numpy<2
 nltk
 opencv-python-headless
 Pillow
