@@ -8,21 +8,116 @@ $(document).ready(function () {
         true: "The Apollo 11 mission was the first spaceflight that landed the first two people on the Moon. Commander Neil Armstrong and lunar module pilot Buzz Aldrin landed the Apollo Lunar Module Eagle on July 20, 1969."
     };
 
-    // --- CHECK MODEL STATUS ON LOAD ---
-    $.get('/status', function (data) {
-        if (!data.deepfake_loaded || !data.nlp_loaded) {
-            let errorMsg = 'One or more AI models failed to initialize.';
-            if (!data.deepfake_loaded && data.deepfake_error) {
-                errorMsg += '\n\nDeepfake Model Error: ' + data.deepfake_error;
+    let loggedIn = false;
+    let authToken = localStorage.getItem('ag_auth_token') || null;
+
+    function setAuthHeader(token) {
+        if (token) {
+            authToken = token;
+            localStorage.setItem('ag_auth_token', token);
+            $.ajaxSetup({
+                headers: {
+                    Authorization: 'Bearer ' + token
+                },
+                xhrFields: {
+                    withCredentials: true
+                }
+            });
+        } else {
+            authToken = null;
+            localStorage.removeItem('ag_auth_token');
+            $.ajaxSetup({
+                headers: {},
+                xhrFields: {
+                    withCredentials: true
+                }
+            });
+        }
+    }
+
+    setAuthHeader(authToken);
+
+    function setAuthUI(isAuthenticated) {
+        loggedIn = isAuthenticated;
+        $('#openLoginBtn').toggleClass('hidden', isAuthenticated);
+        $('#openRegisterBtn').toggleClass('hidden', isAuthenticated);
+        $('#openHistoryBtn').toggleClass('hidden', !isAuthenticated);
+        $('#profileBtn').toggleClass('hidden', !isAuthenticated);
+        $('#logoutBtn').toggleClass('hidden', !isAuthenticated);
+        $('#authPage').toggleClass('hidden', isAuthenticated);
+        $('#landingPage').toggleClass('hidden', !isAuthenticated);
+        $('.scanner-page').addClass('hidden');
+        $('#resultsDisplay').addClass('hidden');
+        $('#resultOverlay').addClass('hidden');
+    }
+
+    let authMode = 'login';
+
+    function setAuthMode(mode) {
+        authMode = mode;
+        $('#showLoginTab').toggleClass('active', mode === 'login');
+        $('#showRegisterTab').toggleClass('active', mode === 'register');
+        $('#loginPanel').toggleClass('hidden', mode !== 'login');
+        $('#registerPanel').toggleClass('hidden', mode !== 'register');
+        $('#authMessage').text('');
+    }
+
+    function showAuth(message, mode = 'login') {
+        setAuthMode(mode);
+        setAuthUI(false);
+        $('#landingPage').addClass('hidden');
+        $('#authPage').removeClass('hidden');
+        $('#authMessage').text(message || (mode === 'register'
+            ? 'Create your account to continue.'
+            : 'Please sign in to continue.'));
+    }
+
+    $('#showLoginTab').click(function () {
+        showAuth('Enter your credentials to log in.', 'login');
+    });
+
+    $('#showRegisterTab').click(function () {
+        showAuth('Fill the form to create your AntiGravity account.', 'register');
+    });
+
+    $('#openLoginBtn').click(function () {
+        showAuth('Enter your credentials to log in.', 'login');
+    });
+
+    $('#openRegisterBtn').click(function () {
+        showAuth('Fill the form to create your AntiGravity account.', 'register');
+    });
+
+    function checkSession() {
+        $.get('/me', function (data) {
+            if (data.authenticated) {
+                authToken = null;
+                setAuthUI(true);
+                $('#status').text('Session active.');
+            } else {
+                showAuth('Sign in or register to unlock your AntiGravity account.');
             }
-            if (!data.nlp_loaded && data.nlp_error) {
-                errorMsg += '\n\nNLP Model Error: ' + data.nlp_error;
+        }).fail(function () {
+            showAuth('Sign in or register to unlock your AntiGravity account.');
+        });
+    }
+
+    function updateSystemStatus(data) {
+        if (!data.neural_engine || !data.linguistic_engine) {
+            let errorMsg = 'One or more AI models failed to initialize.';
+            if (!data.neural_engine && data.neural_error) {
+                errorMsg += '\n\nDeepfake Model Error: ' + data.neural_error;
+            }
+            if (!data.linguistic_engine && data.linguistic_error) {
+                errorMsg += '\n\nLinguistic Model Error: ' + data.linguistic_error;
             }
             $('#errorMessage').text(errorMsg);
             $('#errorModal').removeClass('hidden');
             $('.cyber-btn').prop('disabled', true);
         }
-    }).fail(function () {
+    }
+
+    $.get('/status', updateSystemStatus).fail(function () {
         $('#errorMessage').text('Failed to connect to the server. Please ensure the backend is running.');
         $('#errorModal').removeClass('hidden');
         $('.cyber-btn').prop('disabled', true);
@@ -32,8 +127,133 @@ $(document).ready(function () {
         $('#errorModal').addClass('hidden');
     });
 
+    $('#loginBtn').click(function () {
+        const email = $('#loginEmail').val().trim();
+        const password = $('#loginPassword').val().trim();
+        if (!email || !password) {
+            $('#authMessage').text('Email and password are required.');
+            return;
+        }
+        $.ajax({
+            url: '/login',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email, password }),
+            success: function (data) {
+                if (data.success) {
+                    setAuthHeader(data.token);
+                    setAuthUI(true);
+                    $('#authMessage').text('Welcome back, ' + data.user.name + '.');
+                } else {
+                    $('#authMessage').text(data.message || 'Login failed.');
+                }
+            },
+            error: function (xhr) {
+                $('#authMessage').text(xhr.responseJSON?.message || 'Login failed.');
+            }
+        });
+    });
+
+    $('#registerBtn').click(function () {
+        const name = $('#registerName').val().trim();
+        const email = $('#registerEmail').val().trim();
+        const password = $('#registerPassword').val().trim();
+        if (!name || !email || !password) {
+            $('#authMessage').text('Name, email and password are required.');
+            return;
+        }
+        $.ajax({
+            url: '/register',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name, email, password }),
+            success: function (data) {
+                if (data.success) {
+                    setAuthHeader(data.token);
+                    setAuthUI(true);
+                    $('#authMessage').text('Account created. Welcome.');
+                } else {
+                    $('#authMessage').text(data.message || 'Registration failed.');
+                }
+            },
+            error: function (xhr) {
+                $('#authMessage').text(xhr.responseJSON?.message || 'Registration failed.');
+            }
+        });
+    });
+
+    $('#logoutBtn').click(function () {
+        $.post('/logout', function () {
+            setAuthHeader(null);
+            setAuthUI(false);
+            showAuth('You have been signed out.');
+        }).fail(function () {
+            setAuthHeader(null);
+            setAuthUI(false);
+            showAuth('You have been signed out.');
+        });
+    });
+
+    $('#refreshKeyBtn').click(function () {
+        $.post('/refresh_api_key', function (data) {
+            if (data.success) {
+                $('#profileApiKey').text(data.api_key);
+                $('#authMessage').text('API key refreshed.');
+            }
+        }).fail(function () {
+            $('#authMessage').text('Unable to refresh API key.');
+        });
+    });
+
+    function showSection(sectionId) {
+        $('#landingPage').addClass('hidden');
+        $('#appContainer').removeClass('hidden');
+        $('.scanner-page').addClass('hidden');
+        $('#resultsDisplay').addClass('hidden');
+        $('#resultOverlay').addClass('hidden');
+        $(`#${sectionId}`).removeClass('hidden');
+    }
+
+    $('#profileBtn').click(function () {
+        showSection('profilePage');
+        $.get('/me', function (data) {
+            if (data.authenticated) {
+                $('#profileName').text(data.user.name);
+                $('#profileEmail').text(data.user.email);
+                $('#profileTier').text(data.user.is_premium ? 'Pro' : 'Free');
+                $('#profileApiKey').text(data.user.api_key);
+            }
+        });
+    });
+
+    $('#pricingBtn').click(function () {
+        showSection('pricingPage');
+    });
+
+    checkSession();
+
+    $('#openHistoryBtn').click(function () {
+        $('#landingPage').addClass('hidden');
+        $('#appContainer').removeClass('hidden');
+        $('.scanner-page').addClass('hidden');
+        $('#resultsDisplay').addClass('hidden');
+        $('#resultOverlay').addClass('hidden');
+        $('#historyPage').removeClass('hidden');
+        fetchHistory();
+    });
+
+    $('#themeToggle').click(function () {
+        $('body').toggleClass('light-mode');
+        const isLight = $('body').hasClass('light-mode');
+        $(this).text(isLight ? 'DARK MODE' : 'LIGHT MODE');
+    });
+
     // --- NAVIGATION ---
     $('.scan-entry-btn').click(function () {
+        if (!loggedIn) {
+            showAuth('Please log in to access AntiGravity scans.');
+            return;
+        }
         const target = $(this).data('target');
         $('#landingPage').css('transition', 'all 1s cubic-bezier(0.19, 1, 0.22, 1)')
             .css('opacity', '0')
@@ -51,10 +271,17 @@ $(document).ready(function () {
                 .css('transform', 'scale(1)');
 
             $('.scanner-page').addClass('hidden');
+            $('#resultsDisplay').addClass('hidden');
+            $('#resultOverlay').addClass('hidden');
             if (target === 'text-panel') {
                 $('#textScannerPage').removeClass('hidden');
-            } else {
+            } else if (target === 'image-panel') {
                 $('#mediaScannerPage').removeClass('hidden');
+            } else if (target === 'url-panel') {
+                $('#urlScannerPage').removeClass('hidden');
+            } else if (target === 'history-panel') {
+                $('#historyPage').removeClass('hidden');
+                fetchHistory();
             }
         }, 800);
     });
@@ -195,6 +422,24 @@ $(document).ready(function () {
         $('#resultOverlay').addClass('hidden');
     }
 
+    function showAjaxError(xhr, defaultMessage = 'LINK FAILURE') {
+        let message = defaultMessage;
+        if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+            message = xhr.responseJSON.message;
+        } else if (xhr && xhr.responseText) {
+            try {
+                const json = JSON.parse(xhr.responseText);
+                if (json.message) {
+                    message = json.message;
+                }
+            } catch (e) {
+                /* ignore invalid JSON */
+            }
+        }
+        alert(message);
+        resetProcess();
+    }
+
     function updateResultUI(truthScore, explanation) {
         resetProcess();
         $('#resultsDisplay').removeClass('hidden').css('opacity', '0').css('transform', 'translateY(20px)');
@@ -281,8 +526,38 @@ $(document).ready(function () {
         }, 800);
     }
 
+    function fetchHistory() {
+        $.get('/history', function (records) {
+            const tbody = $('#historyTable tbody');
+            tbody.empty();
+            if (!records || records.length === 0) {
+                tbody.append('<tr><td colspan="5">NO HISTORY AVAILABLE</td></tr>');
+                return;
+            }
+            records.forEach(record => {
+                tbody.append(`
+                    <tr>
+                        <td>${record.scan_id}</td>
+                        <td>${record.type}</td>
+                        <td>${record.result}</td>
+                        <td>${parseFloat(record.confidence).toFixed(1)}%</td>
+                        <td>${record.timestamp}</td>
+                    </tr>
+                `);
+            });
+        }).fail(function () {
+            alert('Unable to load scan history from backend.');
+        });
+    }
+
+    $('#refreshHistory').click(fetchHistory);
+
     // --- ANALYZE TEXT ---
     $('#analyzeTextBtn').click(function () {
+        if (!loggedIn) {
+            showAuth('Sign in to run text scans.', 'login');
+            return;
+        }
         const text = $('#newsInput').val();
         if (!text.trim()) return alert("INPUT STREAM EMPTY");
 
@@ -299,7 +574,8 @@ $(document).ready(function () {
             if (data.result === 'Error') { alert(data.message); resetProcess(); return; }
 
             const isFake = (data.result === 'FAKE');
-            let truthScore = parseFloat(data.confidence) || 0;
+            let backendConfidence = parseFloat(data.confidence) || 0;
+            let truthScore = isFake ? (100 - backendConfidence) : backendConfidence;
             truthScore = Math.max(2, Math.min(98, truthScore));
 
             let explanation = {
@@ -311,7 +587,42 @@ $(document).ready(function () {
                 updateResultUI(truthScore, explanation);
             }, 1500);
 
-        }).fail(() => { alert("LINK FAILURE"); resetProcess(); });
+        }).fail(function (xhr) { showAjaxError(xhr); });
+    });
+
+    // --- ANALYZE URL ---
+    $('#analyzeUrlBtn').click(function () {
+        if (!loggedIn) {
+            showAuth('Sign in to run URL scans.', 'login');
+            return;
+        }
+        const url = $('#urlInput').val().trim();
+        if (!url) return alert('URL INPUT EMPTY');
+
+        const urlMessages = [
+            "RESOLVING_REMOTE_RESOURCE...",
+            "CRAWLING_PAGE_CONTENT...",
+            "SCANNING_SOURCE TRACES...",
+            "ANALYZING_TONE_AND_CONTEXT...",
+            "FINALIZING_VERACITY_SCORE..."
+        ];
+        initProcess(urlMessages);
+
+        $.post('/predict_url', { url: url }, function (data) {
+            if (data.result === 'Error') { alert(data.message); resetProcess(); return; }
+
+            let backendConfidence = parseFloat(data.confidence) || 0;
+            let truthScore = data.result === 'FAKE' ? Math.max(2, Math.min(98, 100 - backendConfidence)) : Math.max(2, Math.min(98, backendConfidence));
+
+            const explanation = {
+                summary: data.summary || 'Web source analysis complete.',
+                details: data.forensic_details || []
+            };
+
+            setTimeout(() => {
+                updateResultUI(truthScore, explanation);
+            }, 1500);
+        }).fail(function (xhr) { showAjaxError(xhr); });
     });
 
     // --- ANALYZE IMAGE ---
@@ -369,6 +680,10 @@ $(document).ready(function () {
     });
 
     $('#analyzeImageBtn').click(function () {
+        if (!loggedIn) {
+            showAuth('Sign in to run media scans.', 'login');
+            return;
+        }
         if (!currentFile) return;
         const forensicMessages = [
             "INITIALIZING_VISION_FORENSICS...",
@@ -436,7 +751,7 @@ $(document).ready(function () {
                     updateResultUI(truthScore, explanation);
                 }, 2500);
             },
-            error: () => { alert("NEURAL LINK SEVERED"); resetProcess(); }
+            error: function (xhr) { showAjaxError(xhr, 'NEURAL LINK SEVERED'); }
         });
     });
 });

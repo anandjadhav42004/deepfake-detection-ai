@@ -1,47 +1,36 @@
 import pandas as pd
 import pickle
-from sklearn.model_selection import train_test_split
+import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix
-import os
 
-# Create directory if it doesn't exist
+# Corrected Paths (Relative to backend folder)
 os.makedirs('models/fake_news', exist_ok=True)
+os.makedirs('data', exist_ok=True)
 
-# Load Data
-# Assuming data/news.csv exists. 
-# For a real scenario, we might download a dataset here.
-try:
-    df = pd.read_csv('data/news.csv')
-except FileNotFoundError:
-    print("Error: data/news.csv not found. Please place a dataset there.")
-    exit(1)
+data = {
+    'text': [
+        "NASA scientists confirm the Earth is round and the Moon landing was real.",
+        "The industrial revolution transformed agrarian societies into industrial ones using steam power.",
+        "Experts warn that drinking bleach is a cure for viruses. Doctors say it is a miracle secret.",
+        "BREAKING: Massive solar flare to shut down internet. Governments preparing emergency rations.",
+        "The capital of France is Paris. It is a historical city known for the Eiffel Tower."
+    ],
+    'label': [0, 0, 1, 1, 0] # 0 = Real, 1 = Fake
+}
+df = pd.DataFrame(data)
+df.to_csv('data/news.csv', index=False)
 
-# Preprocessing (Simple for now)
-# In a robust system, we would add stemming, stop-word removal here utilizing NLTK.
-labels = df.label
-x_train, x_test, y_train, y_test = train_test_split(df['text'], labels, test_size=0.2, random_state=7)
+vectorizer = TfidfVectorizer(stop_words='english')
+X = vectorizer.fit_transform(df['text'])
+y = df['label']
 
-# Feature Extraction
-tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_df=0.7)
-tfidf_train = tfidf_vectorizer.fit_transform(x_train) 
-tfidf_test = tfidf_vectorizer.transform(x_test)
+model = PassiveAggressiveClassifier(max_iter=50)
+model.fit(X, y)
 
-# Model Training
-pac = PassiveAggressiveClassifier(max_iter=50)
-pac.fit(tfidf_train, y_train)
+with open('models/fake_news/model.pkl', 'wb') as f:
+    pickle.dump(model, f)
+with open('models/fake_news/vectorizer.pkl', 'wb') as f:
+    pickle.dump(vectorizer, f)
 
-# Evaluation
-y_pred = pac.predict(tfidf_test)
-score = accuracy_score(y_test, y_pred)
-print(f'Accuracy: {round(score*100,2)}%')
-
-# Save Model and Vectorizer
-with open('models/fake_news/model.pkl', 'wb') as model_file:
-    pickle.dump(pac, model_file)
-
-with open('models/fake_news/vectorizer.pkl', 'wb') as vec_file:
-    pickle.dump(tfidf_vectorizer, vec_file)
-
-print("Model and vectorizer saved to models/fake_news/")
+print("✅ Linguistic Demo Model Ready!")

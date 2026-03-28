@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AntiGravity Scan</title>
+  <style>
+    body { background: #000; color: #00ff41; font-family: monospace; padding: 20px; }
+    textarea, input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #00ff41; background: #040404; color: #00ff41; }
+    button { width: 100%; padding: 12px; border: 1px solid #00ff41; background: transparent; color: #00ff41; cursor: pointer; }
+    button:hover { background: rgba(0,255,65,0.1); }
+    .status { margin-top: 10px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>AntiGravity</h1>
+  <textarea id="inputText" rows="6" placeholder="Paste text to scan..."></textarea>
+  <input id="apiKey" type="text" placeholder="API key (x-api-key)" />
+  <button id="scanText">Scan Text</button>
+  <button id="scanUrl">Scan Current URL</button>
+  <div class="status" id="status">Ready.</div>
+  <script src="popup.js"></script>
+</body>
+</html>

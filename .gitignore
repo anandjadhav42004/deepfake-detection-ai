@@ -146,3 +146,6 @@ __pycache__/
 backend/app/__pycache__/
 frontend/.DS_Store
 backend/.DS_Store
+.agent.md
+backend_data.db
+backend/instance/*.db

@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "AntiGravity Scanner",
+  "version": "1.0",
+  "description": "Scan selected text or current URLs with the AntiGravity API.",
+  "permissions": ["contextMenus", "notifications", "storage"],
+  "host_permissions": ["http://localhost:5001/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

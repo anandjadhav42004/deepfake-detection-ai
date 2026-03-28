@@ -69,5 +69,26 @@ The UI simulates a live connection to global verification nodes, providing an im
 
 ---
 
+## 🔐 Environment Variables
+Create `backend/.env` with the following values:
+```env
+GEMINI_API_KEY=your_gemini_api_key
+SECRET_KEY=replace_with_secure_random_string
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_WHATSAPP_NUMBER=whatsapp:+1234567890
+DATABASE_URL=postgresql://user:pass@host:port/dbname
+REDIS_URL=redis://localhost:6379/0
+```
+
+## 🚀 Production Deploy
+- `Procfile` is included for `gunicorn backend.run:app`
+- `backend/requirements.txt` now includes all auth, API, and webhook dependencies
+- CORS is enabled for API routes and webhook endpoints
+
+---
+
 ### **🛡️ Built for the Guardians of Digital Truth.**
 *Developed with Neural Precision by [Anand Jadhav](https://github.com/anandjadhav42004).*
