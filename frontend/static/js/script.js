@@ -8,7 +8,7 @@ $(document).ready(function () {
         true: "The Apollo 11 mission was the first spaceflight that landed the first two people on the Moon. Commander Neil Armstrong and lunar module pilot Buzz Aldrin landed the Apollo Lunar Module Eagle on July 20, 1969."
     };
 
-    let loggedIn = false;
+    let loggedIn = true;
     let authToken = localStorage.getItem('ag_auth_token') || null;
 
     function setAuthHeader(token) {
@@ -38,65 +38,21 @@ $(document).ready(function () {
     setAuthHeader(authToken);
 
     function setAuthUI(isAuthenticated) {
-        loggedIn = isAuthenticated;
-        $('#openLoginBtn').toggleClass('hidden', isAuthenticated);
-        $('#openRegisterBtn').toggleClass('hidden', isAuthenticated);
-        $('#openHistoryBtn').toggleClass('hidden', !isAuthenticated);
-        $('#profileBtn').toggleClass('hidden', !isAuthenticated);
-        $('#logoutBtn').toggleClass('hidden', !isAuthenticated);
-        $('#authPage').toggleClass('hidden', isAuthenticated);
-        $('#landingPage').toggleClass('hidden', !isAuthenticated);
+        loggedIn = true;
+        $('#openHistoryBtn').removeClass('hidden');
+        $('#profileBtn').removeClass('hidden');
+        $('#logoutBtn').addClass('hidden');
+        $('#landingPage').removeClass('hidden');
         $('.scanner-page').addClass('hidden');
         $('#resultsDisplay').addClass('hidden');
         $('#resultOverlay').addClass('hidden');
     }
 
-    let authMode = 'login';
-
-    function setAuthMode(mode) {
-        authMode = mode;
-        $('#showLoginTab').toggleClass('active', mode === 'login');
-        $('#showRegisterTab').toggleClass('active', mode === 'register');
-        $('#loginPanel').toggleClass('hidden', mode !== 'login');
-        $('#registerPanel').toggleClass('hidden', mode !== 'register');
-        $('#authMessage').text('');
-    }
-
-    function showAuth(message, mode = 'login') {
-        setAuthMode(mode);
-        setAuthUI(false);
-        $('#landingPage').addClass('hidden');
-        $('#authPage').removeClass('hidden');
-        $('#authMessage').text(message || (mode === 'register'
-            ? 'Create your account to continue.'
-            : 'Please sign in to continue.'));
-    }
-
-    $('#showLoginTab').click(function () {
-        showAuth('Enter your credentials to log in.', 'login');
-    });
-
-    $('#showRegisterTab').click(function () {
-        showAuth('Fill the form to create your AntiGravity account.', 'register');
-    });
-
-    $('#openLoginBtn').click(function () {
-        showAuth('Enter your credentials to log in.', 'login');
-    });
-
-    $('#openRegisterBtn').click(function () {
-        showAuth('Fill the form to create your AntiGravity account.', 'register');
-    });
-
     function checkSession() {
         $.get('/auth/me', function (data) {
-            if (data.authenticated) {
-                setAuthUI(true);
-            } else {
-                showAuth('Sign in or register to unlock your AntiGravity account.');
-            }
+            setAuthUI(Boolean(data.authenticated));
         }).fail(function () {
-            showAuth('Sign in or register to unlock your AntiGravity account.');
+            setAuthUI(true);
         });
     }
 
@@ -125,70 +81,13 @@ $(document).ready(function () {
         $('#errorModal').addClass('hidden');
     });
 
-    $('#loginBtn').click(function () {
-        const email = $('#loginEmail').val().trim();
-        const password = $('#loginPassword').val().trim();
-        if (!email || !password) {
-            $('#authMessage').text('Email and password are required.');
-            return;
-        }
-        $.ajax({
-            url: '/auth/login',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ email, password }),
-            success: function (data) {
-                if (data.success) {
-                    setAuthHeader(data.token);
-                    setAuthUI(true);
-                    $('#authMessage').text('Welcome back, ' + data.user.name + '.');
-                } else {
-                    $('#authMessage').text(data.message || 'Login failed.');
-                }
-            },
-            error: function (xhr) {
-                $('#authMessage').text(xhr.responseJSON?.message || 'Login failed.');
-            }
-        });
-    });
-
-    $('#registerBtn').click(function () {
-        const name = $('#registerName').val().trim();
-        const email = $('#registerEmail').val().trim();
-        const password = $('#registerPassword').val().trim();
-        if (!name || !email || !password) {
-            $('#authMessage').text('Name, email and password are required.');
-            return;
-        }
-        $.ajax({
-            url: '/auth/register',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ name, email, password }),
-            success: function (data) {
-                if (data.success) {
-                    setAuthHeader(data.token);
-                    setAuthUI(true);
-                    $('#authMessage').text('Account created. Welcome.');
-                } else {
-                    $('#authMessage').text(data.message || 'Registration failed.');
-                }
-            },
-            error: function (xhr) {
-                $('#authMessage').text(xhr.responseJSON?.message || 'Registration failed.');
-            }
-        });
-    });
-
     $('#logoutBtn').click(function () {
         $.post('/auth/logout', function () {
             setAuthHeader(null);
-            setAuthUI(false);
-            showAuth('You have been signed out.');
+            setAuthUI(true);
         }).fail(function () {
             setAuthHeader(null);
-            setAuthUI(false);
-            showAuth('You have been signed out.');
+            setAuthUI(true);
         });
     });
 
@@ -248,10 +147,6 @@ $(document).ready(function () {
 
     // --- NAVIGATION ---
     $('.scan-entry-btn').click(function () {
-        if (!loggedIn) {
-            showAuth('Please log in to access AntiGravity scans.');
-            return;
-        }
         const target = $(this).data('target');
         $('#landingPage').css('transition', 'all 1s cubic-bezier(0.19, 1, 0.22, 1)')
             .css('opacity', '0')
@@ -563,10 +458,6 @@ $(document).ready(function () {
 
     // --- ANALYZE TEXT ---
     $('#analyzeTextBtn').click(function () {
-        if (!loggedIn) {
-            showAuth('Sign in to run text scans.', 'login');
-            return;
-        }
         const text = $('#newsInput').val();
         if (!text.trim()) return alert("INPUT STREAM EMPTY");
 
@@ -601,10 +492,6 @@ $(document).ready(function () {
 
     // --- ANALYZE URL ---
     $('#analyzeUrlBtn').click(function () {
-        if (!loggedIn) {
-            showAuth('Sign in to run URL scans.', 'login');
-            return;
-        }
         const url = $('#urlInput').val().trim();
         if (!url) return alert('URL INPUT EMPTY');
 
@@ -689,10 +576,6 @@ $(document).ready(function () {
     });
 
     $('#analyzeImageBtn').click(function () {
-        if (!loggedIn) {
-            showAuth('Sign in to run media scans.', 'login');
-            return;
-        }
         if (!currentFile) return;
         const forensicMessages = [
             "INITIALIZING_VISION_FORENSICS...",

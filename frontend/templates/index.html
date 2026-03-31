@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@100;300;400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Grotesk:wght@300;400;500;700&display=swap"
         rel="stylesheet">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#000000">
@@ -38,33 +38,6 @@
         <div class="status-pill">SYSTEM ONLINE</div>
     </nav>
 
-    <div id="authPage" class="landing-page hidden">
-        <div class="hero-section">
-            <h1 class="hero-title" data-text="AUTHENTICATE_NOW">AUTHENTICATE_NOW</h1>
-            <p class="hero-tagline">Secure access to AntiGravity V4.0 forensic controls.</p>
-            <div class="auth-tabs">
-                <button id="showLoginTab" class="auth-tab active">LOGIN</button>
-                <button id="showRegisterTab" class="auth-tab">CREATE ACCOUNT</button>
-            </div>
-            <div class="auth-grid">
-                <div id="loginPanel" class="auth-panel">
-                    <h2>LOGIN</h2>
-                    <input id="loginEmail" type="email" placeholder="Email" />
-                    <input id="loginPassword" type="password" placeholder="Password" />
-                    <button id="loginBtn" class="cyber-btn">SIGN IN</button>
-                </div>
-                <div id="registerPanel" class="auth-panel hidden">
-                    <h2>REGISTER</h2>
-                    <input id="registerName" type="text" placeholder="Full Name" />
-                    <input id="registerEmail" type="email" placeholder="Email" />
-                    <input id="registerPassword" type="password" placeholder="Password" />
-                    <button id="registerBtn" class="cyber-btn">CREATE ACCOUNT</button>
-                </div>
-            </div>
-            <div id="authMessage" class="status" style="margin-top: 20px; color: #ff6b6b;"></div>
-        </div>
-    </div>
-
     <!-- Landing Page Segment -->
     <div id="landingPage" class="landing-page">
         <div class="neural-particles" aria-hidden="true">
@@ -87,6 +60,20 @@
                         AntiGravity brings together text analysis, URL verification, and media forensics in one calm,
                         cinematic workspace built to help you inspect suspicious content with clarity instead of noise.
                     </p>
+                    <div class="hero-signal-strip">
+                        <div class="signal-card">
+                            <span class="signal-label">Response</span>
+                            <strong>Under 60 sec</strong>
+                        </div>
+                        <div class="signal-card">
+                            <span class="signal-label">Coverage</span>
+                            <strong>Text, URL, Media</strong>
+                        </div>
+                        <div class="signal-card">
+                            <span class="signal-label">Output</span>
+                            <strong>Readable forensic verdict</strong>
+                        </div>
+                    </div>
                     <div class="hero-intel-band">
                         <span class="intel-chip">TEXT VERIFICATION</span>
                         <span class="intel-chip">URL FORENSICS</span>
@@ -160,6 +147,16 @@
                         <div class="telemetry-line"><span>01</span> Text credibility screening</div>
                         <div class="telemetry-line"><span>02</span> URL source verification</div>
                         <div class="telemetry-line"><span>03</span> Image and video inspection</div>
+                    </div>
+                    <div class="telemetry-readout">
+                        <div>
+                            <span>Signal profile</span>
+                            <strong>Balanced review</strong>
+                        </div>
+                        <div>
+                            <span>Mode switch</span>
+                            <strong>Instant routing</strong>
+                        </div>
                     </div>
                     <div class="telemetry-footer">
                         <div class="intel-chip">SOFT UI / FAST FLOW</div>
