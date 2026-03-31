@@ -24,7 +24,7 @@ from flask_dance.contrib.google import make_google_blueprint, google
 from . import db, login_manager, limiter, get_default_admin_email
 from .models import ScanRecord, User
 from .auth import get_request_user, get_user_info, enforce_quota, google_bp
-from .forensics import vision_model, vision_error, get_wiki_score, analyze_with_gemini
+from .forensics import vision_model, vision_error, get_wiki_score, analyze_with_gemini, analyze_webcam_frame
 
 main = Blueprint('main', __name__)
 
@@ -238,6 +238,55 @@ def api_scan_media():
         return jsonify({'result': result, 'confidence': round(confidence, 2), 'scan_id': scan_id})
     except Exception as e:
         return jsonify({'result': 'Error', 'message': str(e)}), 500
+
+
+@main.route('/api/scan/webcam', methods=['POST'])
+@limiter.limit('1000 per day')
+def api_scan_webcam():
+    user = get_request_user()
+    if not user:
+        return jsonify({'result': 'Error', 'message': 'API key or login required.'}), 401
+    
+    # Optional quota enforcement (higher limit for webcam frames)
+    # if not enforce_quota(user):
+    #     return jsonify({'result': 'Error', 'message': 'Daily scan limit reached.'}), 429
+
+    payload = request.get_json(silent=True) or {}
+    frame_base64 = payload.get('image')
+    if not frame_base64:
+        return jsonify({'result': 'Error', 'message': 'No frame received.'}), 400
+
+    report = analyze_webcam_frame(frame_base64)
+    if 'error' in report:
+        return jsonify({'result': 'Error', 'message': report['error']}), 500
+
+    # Optimization: Store trace only every few frames or on high confidence FAKE
+    # For now, we store if we have a scan_id request and it's fakish? 
+    # Or just always store for accountability if authenticated.
+    
+    result = report['prediction']
+    confidence = report['confidence']
+    scan_id = f'AG-LIVE-{uuid.uuid4().hex[:6].upper()}'
+    
+    # Store record
+    record = ScanRecord(
+        scan_id=scan_id, 
+        user_id=user.id, 
+        type='WEBCAM', 
+        result=result, 
+        confidence=confidence, 
+        details=json.dumps(report)
+    )
+    db.session.add(record)
+    db.session.commit()
+
+    return jsonify({
+        'prediction': result,
+        'confidence': confidence,
+        'forensic_flags': report['forensic_flags'],
+        'scan_id': scan_id
+    })
+
 
 
 @main.route('/webhook/whatsapp', methods=['POST'])

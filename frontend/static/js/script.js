@@ -1,4 +1,8 @@
 $(document).ready(function () {
+    $(window).on('load', function() {
+        $('.hero-title').addClass('revealed');
+    });
+
 
     //--- SAMPLES DATA ---
     const samples = {
@@ -139,11 +143,30 @@ $(document).ready(function () {
         fetchHistory();
     });
 
+    function setAppTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        const toggleBtn = $('#themeToggle');
+        if (theme === 'light') {
+            toggleBtn.text('DARK MODE');
+        } else {
+            toggleBtn.text('LIGHT MODE');
+        }
+        localStorage.setItem('theme', theme);
+    }
+
+    function loadAppTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setAppTheme(savedTheme);
+    }
+
+    loadAppTheme();
+
     $('#themeToggle').click(function () {
-        $('body').toggleClass('light-mode');
-        const isLight = $('body').hasClass('light-mode');
-        $(this).text(isLight ? 'DARK MODE' : 'LIGHT MODE');
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setAppTheme(nextTheme);
     });
+
 
     // --- NAVIGATION ---
     $('.scan-entry-btn').click(function () {
@@ -171,10 +194,13 @@ $(document).ready(function () {
                 $('#mediaScannerPage').removeClass('hidden');
             } else if (target === 'url-panel') {
                 $('#urlScannerPage').removeClass('hidden');
+            } else if (target === 'webcam-panel') {
+                $('#webcamScannerPage').removeClass('hidden');
             } else if (target === 'history-panel') {
                 $('#historyPage').removeClass('hidden');
                 fetchHistory();
             }
+
         }, 800);
     });
 
@@ -195,56 +221,60 @@ $(document).ready(function () {
 
             $('.scanner-page').addClass('hidden');
             $('#resultsDisplay').addClass('hidden');
+            stopWebcam();
         }, 800);
     });
+
 
     // --- MATRIX DIGITAL RAIN ---
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
-    let width, height;
+    let width, height, cols, ypos;
+    const charSize = 18;
+
+    const characters = "アァカサタナハマヤラワガザダバパ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ$+-*/=%\"'#&_(),.;:?!\\|{}<>[]^~";
 
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
+        cols = Math.floor(width / charSize);
+        ypos = Array.from({ length: cols }, () => Math.random() * height);
     }
+
     window.addEventListener('resize', resize);
     resize();
 
-    const charSize = 20;
-    const cols = Math.floor(width / charSize);
-    const ypos = Array(cols).fill(0);
-
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%\"'#&_(),.;:?!\\|{}<>[]^~";
-
     function drawMatrix() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.07)';
         ctx.fillRect(0, 0, width, height);
 
-        ctx.font = `bold ${charSize - 2}px monospace`;
+        ctx.font = `bold ${charSize - 3}px monospace`;
+        ctx.shadowColor = 'rgba(57, 255, 20, 0.35)';
+        ctx.shadowBlur = 12;
+        ctx.textBaseline = 'top';
 
         ypos.forEach((y, ind) => {
             const text = characters.charAt(Math.floor(Math.random() * characters.length));
             const x = ind * charSize;
+            const intensity = Math.floor(Math.random() * 120) + 135;
 
-            // Matrix Green Spectrum
-            const r = 0;
-            const g = Math.floor(Math.random() * 155) + 100; // 100-255 range
-            const b = 65;
-
-            ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-
-            // Occasional bright white characters
-            if (Math.random() > 0.98) {
-                ctx.fillStyle = '#fff';
+            ctx.fillStyle = `rgba(57, ${intensity}, 20, 0.92)`;
+            if (Math.random() > 0.97) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
+            } else {
+                ctx.shadowColor = 'rgba(57, 255, 20, 0.35)';
             }
 
             ctx.fillText(text, x, y);
 
-            if (y > 100 + Math.random() * 20000) ypos[ind] = 0;
-            else ypos[ind] = y + charSize;
+            ypos[ind] = y > height + Math.random() * 10000 ? 0 : y + charSize + Math.random() * 3;
         });
+
+        requestAnimationFrame(drawMatrix);
     }
-    setInterval(drawMatrix, 50);
+
+    drawMatrix();
 
     // --- UI LOGIC ---
 
@@ -631,4 +661,139 @@ $(document).ready(function () {
             error: function (xhr) { showAjaxError(xhr, 'NEURAL LINK SEVERED'); }
         });
     });
+
+    // --- LIVE WEBCAM SCANNER ---
+    let webcamStream = null;
+    let webcamInterval = null;
+    const WEBCAM_POLL_MS = 800;
+
+    async function startWebcam() {
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: "user",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            });
+            const video = document.getElementById('webcamFeed');
+            video.srcObject = webcamStream;
+            
+            $('#webcamInstructions').addClass('hidden');
+            $('#webcamOverlay').removeClass('hidden');
+            $('#startWebcamBtn').addClass('hidden');
+            $('#stopWebcamBtn').removeClass('hidden');
+            $('#rollingLogsContainer').removeClass('hidden');
+            $('#webcamBadge').text('BOOTING...').removeClass('fake');
+            
+            // Start capturing frames
+            setTimeout(() => {
+                webcamInterval = setInterval(captureAndScan, WEBCAM_POLL_MS);
+            }, 1000);
+            
+        } catch (err) {
+            console.error("Webcam Error:", err);
+            alert("Unable to access camera. Please check permissions.");
+        }
+    }
+
+    function stopWebcam() {
+        if (webcamInterval) {
+            clearInterval(webcamInterval);
+            webcamInterval = null;
+        }
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(track => track.stop());
+            webcamStream = null;
+        }
+        
+        const video = document.getElementById('webcamFeed');
+        if (video) video.srcObject = null;
+        
+        $('#webcamInstructions').removeClass('hidden');
+        $('#webcamOverlay').addClass('hidden');
+        $('#startWebcamBtn').removeClass('hidden');
+        $('#stopWebcamBtn').addClass('hidden');
+        // Clear log on stop? optional.
+    }
+
+    function captureAndScan() {
+        const video = document.getElementById('webcamFeed');
+        const canvas = document.getElementById('captureCanvas');
+        if (!video || !canvas || video.paused || video.ended) return;
+
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Draw centered square crop for model if needed, or just send full frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const base64Image = canvas.toDataURL('image/jpeg', 0.7);
+
+        $.ajax({
+            url: '/api/scan/webcam',
+            type: 'POST',
+            data: JSON.stringify({ image: base64Image }),
+            contentType: 'application/json',
+            success: function(data) {
+                updateWebcamUI(data);
+            },
+            error: function(err) {
+                console.error("Webcam scan failure", err);
+            }
+        });
+    }
+
+    function updateWebcamUI(data) {
+        const badge = $('#webcamBadge');
+        const conf = $('#webcamConfidence');
+        
+        const prevRes = badge.text();
+        const curRes = data.prediction;
+        
+        badge.text(curRes);
+        conf.text(`${data.confidence.toFixed(1)}%`);
+        
+        if (curRes === 'FAKE') {
+            badge.addClass('fake');
+        } else {
+            badge.removeClass('fake');
+        }
+
+        // Pulse effect if result changes
+        if (prevRes !== curRes && prevRes !== 'BOOTING...') {
+            badge.css('transform', 'scale(1.2)');
+            setTimeout(() => badge.css('transform', 'scale(1)'), 200);
+        }
+
+        addRollingLog(data);
+    }
+
+    function addRollingLog(data) {
+        const logBox = $('#webcamRollingLogs');
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
+                        now.getMinutes().toString().padStart(2, '0') + ":" + 
+                        now.getSeconds().toString().padStart(2, '0');
+        
+        const logEntry = $(`
+            <div class="log-entry ${data.prediction.toLowerCase()}">
+                <span class="log-time">[${timeStr}]</span>
+                <span class="log-id">${data.scan_id}</span>
+                <span class="log-res">${data.prediction} (${data.confidence.toFixed(1)}%)</span>
+            </div>
+        `);
+        
+        logBox.prepend(logEntry);
+        
+        // Keep last 5
+        if (logBox.children().length > 5) {
+            logBox.children().last().remove();
+        }
+    }
+
+    $('#startWebcamBtn').click(startWebcam);
+    $('#stopWebcamBtn').click(stopWebcam);
 });
+

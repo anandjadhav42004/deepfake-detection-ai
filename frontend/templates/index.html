@@ -22,9 +22,10 @@
     <div class="matrix-background">
         <canvas id="matrixCanvas"></canvas>
     </div>
-    <div class="space-background"></div>
     <div class="grid-background"></div>
+    <div class="scanline-overlay"></div>
     <div class="grain-overlay"></div>
+
 
     <nav class="navbar">
         <div class="logo">ANTI<span class="highlight">GRAVITY</span> <span class="version">v4.0</span></div>
@@ -53,9 +54,10 @@
         <div class="landing-shell">
             <section class="hero-panel">
                 <div class="hero-copy">
-                    <div class="hero-kicker">ANTI-GRAVITY // NEURAL VERIFICATION SYSTEM</div>
+                    <div class="hero-kicker">ANTIGRAVITY // NEURAL_VERIFICATION_v4.0</div>
                     <h1 class="hero-title" data-text="AUTHENTICITY">AUTHENTICITY</h1>
-                    <p class="hero-tagline">Soft intelligence for deepfake detection, source review, and media trust.</p>
+                    <p class="hero-tagline typewriter-sub">Soft intelligence for deepfake detection, source review, and media trust.</p>
+
                     <p class="hero-description">
                         AntiGravity brings together text analysis, URL verification, and media forensics in one calm,
                         cinematic workspace built to help you inspect suspicious content with clarity instead of noise.
@@ -116,6 +118,19 @@
                                 <span class="btn-meta">Deepfake detection and visual artifact analysis</span>
                             </span>
                         </button>
+                        <button class="scan-entry-btn webcam-entry" data-target="webcam-panel">
+                            <span class="scan-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M23 7l-7 5 7 5V7z" />
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                                </svg>
+                            </span>
+                            <span class="btn-copy">
+                                <span class="btn-label">Live Scan</span>
+                                <span class="btn-meta">Real-time webcam deepfake detection</span>
+                            </span>
+                        </button>
+
                     </div>
                     <div class="system-stats-grid">
                         <div class="system-stat">
@@ -137,17 +152,18 @@
                         <span class="telemetry-badge">LIVE ANALYSIS</span>
                         <span class="telemetry-status">SYSTEM READY</span>
                     </div>
-                    <div class="telemetry-score-ring">
+                    <div class="telemetry-score-ring" style="--progress: 75%;">
                         <div class="score-core">
                             <span class="score-number">3X</span>
                             <span class="score-label">Scan Modes</span>
                         </div>
                     </div>
                     <div class="telemetry-lines">
-                        <div class="telemetry-line"><span>01</span> Text credibility screening</div>
-                        <div class="telemetry-line"><span>02</span> URL source verification</div>
-                        <div class="telemetry-line"><span>03</span> Image and video inspection</div>
+                        <div class="telemetry-line"><span>01</span> Text verification & anomaly check</div>
+                        <div class="telemetry-line"><span>02</span> URL forensics & trust parsing</div>
+                        <div class="telemetry-line"><span>03</span> Image & video deepfake scanner</div>
                     </div>
+
                     <div class="telemetry-readout">
                         <div>
                             <span>Signal profile</span>
@@ -294,6 +310,48 @@
                 <button id="analyzeImageBtn" class="cyber-btn hidden full-width">EXECUTE DIAGNOSTIC</button>
             </div>
         </div>
+
+        <!-- Live Webcam Scanner Page -->
+        <div id="webcamScannerPage" class="scanner-page hidden">
+            <h1 class="main-title glitched" data-text="LIVE_STREAM_INTEGRITY">LIVE_STREAM_INTEGRITY</h1>
+            <p class="subtitle media-accent">REAL-TIME BIOMETRIC & SYNTHETIC SIGNAL ANALYSIS</p>
+
+            <div class="dedicated-box media-theme">
+                <div class="webcam-container">
+                    <video id="webcamFeed" autoplay playsinline class="webcam-feed"></video>
+                    <canvas id="captureCanvas" style="display:none;"></canvas>
+                    
+                    <div id="webcamOverlay" class="webcam-overlay-ui hidden">
+                        <div class="scanner-scanning-line"></div>
+                        <div id="webcamBadge" class="result-badge">WAITING...</div>
+                        <div id="webcamConfidence" class="confidence-badge">0%</div>
+                    </div>
+
+                    <div id="webcamInstructions" class="webcam-instructions">
+                        <div class="webcam-icon-large">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M23 7l-7 5 7 5V7z" />
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                            </svg>
+                        </div>
+                        <p>ACCESS CAMERA TO INITIATE LIVE SCAN</p>
+                    </div>
+                </div>
+
+                <div class="webcam-controls">
+                    <button id="startWebcamBtn" class="cyber-btn">START CAMERA</button>
+                    <button id="stopWebcamBtn" class="cyber-btn hidden">STOP CAMERA</button>
+                </div>
+
+                <div class="rolling-logs-container hidden" id="rollingLogsContainer">
+                    <div class="log-header">LIVE_FORENSIC_LOG</div>
+                    <div id="webcamRollingLogs" class="rolling-logs">
+                        <!-- Logs added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <!-- URL Scanner Page -->
         <div id="urlScannerPage" class="scanner-page hidden">

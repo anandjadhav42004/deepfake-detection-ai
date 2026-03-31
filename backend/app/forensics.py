@@ -108,3 +108,52 @@ Flags options: sensationalist_language, unverified_claims, scam_pattern, ai_gene
 
 # Initialize on import
 load_models()
+
+import base64
+import io
+
+def analyze_webcam_frame(image_base64):
+    """Analyzes a single frame from the webcam (base64 encoded)."""
+    global vision_model, vision_error
+    
+    if vision_model is None:
+        return {"error": vision_error or "Vision model not loaded"}
+
+    try:
+        # Decode base64 image
+        if ',' in image_base64:
+            image_base64 = image_base64.split(',')[1]
+        
+        image_data = base64.b64decode(image_base64)
+        img = Image.open(io.BytesIO(image_data)).convert('RGB')
+        
+        preprocess = transforms.Compose([
+            transforms.Resize((128, 128)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        
+        input_tensor = preprocess(img).unsqueeze(0)
+        
+        with torch.no_grad():
+            score = vision_model(input_tensor).item()
+            
+        result, confidence = ('FAKE', score * 100) if score > 0.5 else ('REAL', (1 - score) * 100)
+        
+        forensic_flags = []
+        if score > 0.8:
+            forensic_flags.append("HIGH_CONFIDENCE_SYNTHETIC")
+        elif score > 0.5:
+            forensic_flags.append("POTENTIAL_MANIPULATION")
+        else:
+            forensic_flags.append("NATURAL_TEXTURE_CONSISTENCY")
+            
+        return {
+            "prediction": result,
+            "confidence": round(confidence, 2),
+            "forensic_flags": forensic_flags
+        }
+    except Exception as e:
+        print(f"Webcam Analysis Error: {e}")
+        return {"error": str(e)}
+
