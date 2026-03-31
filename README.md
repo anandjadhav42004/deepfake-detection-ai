@@ -155,26 +155,36 @@ The landing page now includes:
 6. **Open the app:** `http://localhost:5001`
 
 ## 🔐 Environment Variables
-Create `backend/.env` only for values you actually use. For local login and registration, `DATABASE_URL` and `REDIS_URL` are optional. If you leave them unset, the app uses local SQLite plus in-memory rate limiting automatically.
+Copy `backend/.env.example` to `backend/.env`, then fill only the values you actually use. For local login and registration, `DATABASE_URL` and `REDIS_URL` are optional. If you leave them unset, the app uses local SQLite plus in-memory rate limiting automatically.
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+On Windows PowerShell:
+```powershell
+Copy-Item backend/.env.example backend/.env
+```
 
 Example:
 ```env
-GEMINI_API_KEY=your_gemini_api_key
-SECRET_KEY=replace_with_secure_random_string
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-TWILIO_ACCOUNT_SID=your_twilio_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_WHATSAPP_NUMBER=whatsapp:+1234567890
+GEMINI_API_KEY=
+SECRET_KEY=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_WHATSAPP_NUMBER=
 # Optional for local development:
 # DATABASE_URL=postgresql://user:pass@host:port/dbname
 # REDIS_URL=redis://localhost:6379/0
 ```
 
 If login or registration fails on another machine, first remove placeholder values from `backend/.env` and restart the server.
+On Windows or any machine without Redis running locally, leave `REDIS_URL` unset or commented out so auth falls back to in-memory rate limiting.
+For a fresh local database, the app auto-creates a default admin account with `admin@gmail.com` and `admin123` unless you override `ADMIN_EMAIL` or `ADMIN_PASSWORD`.
 
 ## 🚀 Production Deploy
 - `Procfile` is included for `gunicorn backend.run:app`
 - `backend/requirements.txt` now includes all auth, API, and webhook dependencies
 - CORS is enabled for API routes and webhook endpoints
-

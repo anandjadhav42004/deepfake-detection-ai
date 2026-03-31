@@ -33,6 +33,7 @@ def _get_optional_env(name):
         'your_twilio_auth_token',
         'whatsapp:+1234567890',
         'postgresql://user:pass@host:port/dbname',
+        'redis://localhost:6379/0',
     }
     if normalized in placeholder_values or normalized.startswith('your_') or normalized.startswith('replace_with_'):
         return None
