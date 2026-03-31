@@ -166,9 +166,10 @@ body {
     top: 0;
     width: 100%;
     z-index: 100;
-    background: rgba(2, 2, 5, 0.5);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--glass-border);
+    background: rgba(7, 10, 12, 0.52);
+    backdrop-filter: blur(22px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.22);
 }
 
 .logo {
@@ -205,9 +206,9 @@ body {
 .theme-btn {
     font-family: var(--font-head);
     font-size: 0.8rem;
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    background: rgba(0, 0, 0, 0.18);
+    color: #d9f7e5;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
     padding: 8px 16px;
     border-radius: 999px;
     cursor: pointer;
@@ -215,7 +216,9 @@ body {
 }
 
 .theme-btn:hover {
-    background: rgba(0, 255, 65, 0.08);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    transform: translateY(-1px);
 }
 
 .auth-nav-btn {
@@ -2014,8 +2017,69 @@ body,
 
 .history-actions {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
     margin-bottom: 20px;
+}
+
+.history-filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.history-control {
+    min-width: 160px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 65, 0.16);
+    background: rgba(0, 0, 0, 0.55);
+    color: var(--accent);
+    font-family: var(--font-head);
+    font-size: 0.74rem;
+    letter-spacing: 1px;
+}
+
+.history-search {
+    min-width: 220px;
+}
+
+.history-control::placeholder {
+    color: rgba(0, 255, 65, 0.42);
+}
+
+.history-control:focus {
+    border-color: rgba(0, 255, 65, 0.4);
+    box-shadow: 0 0 0 3px rgba(0, 255, 65, 0.08);
+}
+
+.history-report-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    color: var(--accent);
+    text-decoration: none;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    background: rgba(0, 255, 65, 0.05);
+    transition: all 0.2s ease;
+}
+
+.history-report-link:hover {
+    background: rgba(0, 255, 65, 0.14);
+    border-color: rgba(0, 255, 65, 0.3);
+    color: #fff;
+}
+
+.history-report-link:visited {
+    color: var(--accent);
 }
 
 .history-table-wrap {
@@ -2058,9 +2122,9 @@ body,
     position: relative;
     padding: 140px 24px 80px;
     background:
-        radial-gradient(circle at top right, rgba(0, 255, 65, 0.08), transparent 26%),
-        radial-gradient(circle at 15% 20%, rgba(0, 255, 65, 0.06), transparent 20%),
-        linear-gradient(180deg, rgba(2, 6, 6, 0.55), rgba(0, 0, 0, 0.2));
+        radial-gradient(circle at top right, rgba(151, 255, 198, 0.12), transparent 24%),
+        radial-gradient(circle at 15% 20%, rgba(198, 255, 226, 0.07), transparent 22%),
+        linear-gradient(180deg, rgba(9, 14, 17, 0.72), rgba(2, 6, 9, 0.32));
 }
 
 .landing-shell {
@@ -2078,15 +2142,15 @@ body,
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
     gap: 28px;
-    padding: 42px;
-    border: 1px solid rgba(0, 255, 65, 0.14);
-    border-radius: 28px;
+    padding: 48px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 30px;
     background:
-        linear-gradient(135deg, rgba(4, 10, 12, 0.94), rgba(2, 4, 10, 0.88)),
-        radial-gradient(circle at 10% 10%, rgba(0, 255, 65, 0.1), transparent 30%);
+        linear-gradient(135deg, rgba(10, 16, 20, 0.92), rgba(7, 10, 14, 0.84)),
+        radial-gradient(circle at 10% 10%, rgba(180, 255, 215, 0.08), transparent 34%);
     box-shadow:
-        inset 0 0 90px rgba(0, 255, 65, 0.04),
-        0 30px 80px rgba(0, 0, 0, 0.36);
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 28px 90px rgba(0, 0, 0, 0.34);
     overflow: hidden;
 }
 
@@ -2094,7 +2158,7 @@ body,
     content: '';
     position: absolute;
     inset: 14px;
-    border: 1px solid rgba(0, 255, 65, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 22px;
     pointer-events: none;
 }
@@ -2116,8 +2180,8 @@ body,
 
 #landingPage .hero-tagline {
     margin-bottom: 18px;
-    color: #d8ffe6;
-    letter-spacing: 2px;
+    color: rgba(236, 247, 241, 0.9);
+    letter-spacing: 1px;
     font-size: 1.2rem;
     white-space: normal;
     animation: none;
@@ -2127,28 +2191,30 @@ body,
 .hero-description {
     max-width: 700px;
     margin: 0 0 30px;
-    color: rgba(223, 242, 231, 0.72);
+    color: rgba(223, 242, 231, 0.68);
     font-size: 1rem;
-    line-height: 1.8;
+    line-height: 1.9;
 }
 
 .product-cta {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-    margin: 0 0 26px;
+    gap: 18px;
+    margin: 0 0 30px;
 }
 
 #landingPage .scan-entry-btn {
     min-width: 0;
     width: 100%;
-    padding: 20px 18px;
+    padding: 22px 20px;
     display: flex;
     align-items: center;
     gap: 14px;
     text-align: left;
-    border-radius: 18px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 255, 65, 0.03));
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(170, 255, 208, 0.04));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .scan-icon {
@@ -2159,10 +2225,10 @@ body,
     align-items: center;
     justify-content: center;
     border-radius: 14px;
-    border: 1px solid rgba(0, 255, 65, 0.18);
-    background: rgba(0, 255, 65, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--accent);
-    box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.08);
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.03);
 }
 
 .scan-icon svg {
@@ -2185,7 +2251,7 @@ body,
 }
 
 .btn-meta {
-    color: rgba(223, 242, 231, 0.58);
+    color: rgba(223, 242, 231, 0.62);
     font-size: 0.8rem;
     line-height: 1.5;
     letter-spacing: 0.2px;
@@ -2202,13 +2268,13 @@ body,
     flex-direction: column;
     gap: 8px;
     padding: 18px;
-    border: 1px solid rgba(0, 255, 65, 0.12);
-    border-radius: 16px;
-    background: rgba(0, 255, 65, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .stat-value {
-    color: #fff;
+    color: #f3fff7;
     font-family: var(--font-head);
     font-size: 1.1rem;
     letter-spacing: 2px;
@@ -2225,12 +2291,12 @@ body,
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 24px;
-    border: 1px solid rgba(0, 255, 65, 0.12);
-    border-radius: 24px;
+    padding: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
     background:
-        linear-gradient(180deg, rgba(8, 16, 20, 0.98), rgba(3, 7, 10, 0.92));
-    box-shadow: inset 0 0 60px rgba(0, 255, 65, 0.04);
+        linear-gradient(180deg, rgba(14, 20, 24, 0.96), rgba(7, 10, 14, 0.9));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .telemetry-header,
@@ -2253,15 +2319,15 @@ body,
 }
 
 .telemetry-badge {
-    background: rgba(0, 255, 65, 0.08);
-    border: 1px solid rgba(0, 255, 65, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
     color: rgba(223, 242, 231, 0.84);
 }
 
 .telemetry-status {
-    background: rgba(7, 20, 10, 0.82);
-    border: 1px solid rgba(84, 255, 145, 0.25);
-    color: #8dffb4;
+    background: rgba(170, 255, 208, 0.08);
+    border: 1px solid rgba(170, 255, 208, 0.14);
+    color: #bff8d3;
 }
 
 .telemetry-score-ring {
@@ -2281,9 +2347,9 @@ body,
     align-items: center;
     justify-content: center;
     background:
-        radial-gradient(circle, rgba(0, 255, 65, 0.08), rgba(0, 255, 65, 0.01) 58%, transparent 60%),
-        conic-gradient(from 90deg, rgba(0, 255, 65, 0.92) 0 331deg, rgba(255, 255, 255, 0.08) 331deg 360deg);
-    box-shadow: 0 0 30px rgba(0, 255, 65, 0.18);
+        radial-gradient(circle, rgba(188, 255, 218, 0.12), rgba(188, 255, 218, 0.02) 58%, transparent 60%),
+        conic-gradient(from 90deg, rgba(164, 255, 206, 0.9) 0 318deg, rgba(255, 255, 255, 0.08) 318deg 360deg);
+    box-shadow: 0 0 34px rgba(154, 255, 200, 0.12);
     position: relative;
 }
 
@@ -2327,9 +2393,9 @@ body,
     gap: 12px;
     padding: 12px 14px;
     border-radius: 12px;
-    border: 1px solid rgba(0, 255, 65, 0.08);
-    background: rgba(0, 255, 65, 0.03);
-    color: rgba(223, 242, 231, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(223, 242, 231, 0.76);
     font-family: 'Courier New', monospace;
     font-size: 0.84rem;
 }
@@ -2342,10 +2408,10 @@ body,
 
 .landing-section {
     padding: 30px;
-    border: 1px solid rgba(0, 255, 65, 0.1);
-    border-radius: 24px;
-    background: linear-gradient(180deg, rgba(3, 8, 10, 0.9), rgba(2, 5, 8, 0.76));
-    box-shadow: inset 0 0 70px rgba(0, 255, 65, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 26px;
+    background: linear-gradient(180deg, rgba(10, 15, 18, 0.88), rgba(6, 9, 12, 0.76));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .section-heading {
@@ -2380,17 +2446,17 @@ body,
 .core-feature-card,
 .workflow-step {
     padding: 22px;
-    border-radius: 18px;
-    border: 1px solid rgba(0, 255, 65, 0.1);
-    background: linear-gradient(180deg, rgba(0, 255, 65, 0.045), rgba(255, 255, 255, 0.01));
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(160, 255, 204, 0.02));
     transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .core-feature-card:hover,
 .workflow-step:hover {
     transform: translateY(-4px);
-    border-color: rgba(0, 255, 65, 0.22);
-    box-shadow: 0 16px 40px rgba(0, 255, 65, 0.08);
+    border-color: rgba(202, 255, 227, 0.18);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
 .feature-icon-wrap,

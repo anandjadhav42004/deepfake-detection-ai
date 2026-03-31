@@ -1,5 +1,5 @@
 # A PROJECT REPORT ON
-# ANTI-GRAVITY: NEURAL VERIFICATION SYSTEM V3.0 (DEEPFAKE & FAKE NEWS DETECTION AI)
+# ANTI-GRAVITY: NEURAL VERIFICATION SYSTEM V4.0 (DEEPFAKE & FAKE NEWS DETECTION AI)
 
 **Submitted in partial fulfillment of the requirements for the award of the degree of**
 
@@ -27,7 +27,7 @@
 
 # CERTIFICATE
 
-This is to certify that the project report entitled **"Anti-Gravity: Neural Verification System v3.0 (Deepfake & Fake News Detection AI)"** is a bonafide record of the project work carried out by **[Your Name/Team Names]** bearing Roll No(s). **[Roll Numbers]**, under my supervision and guidance, in partial fulfillment of the requirements for the award of the Degree of Bachelor of Technology in Computer Science and Engineering from **[Your Institution Name]**, affiliated to **[University Name]**. 
+This is to certify that the project report entitled **"Anti-Gravity: Neural Verification System v4.0 (Deepfake & Fake News Detection AI)"** is a bonafide record of the project work carried out by **[Your Name/Team Names]** bearing Roll No(s). **[Roll Numbers]**, under my supervision and guidance, in partial fulfillment of the requirements for the award of the Degree of Bachelor of Technology in Computer Science and Engineering from **[Your Institution Name]**, affiliated to **[University Name]**. 
 
 The work embodied in this report is original and has not been submitted to any other University or Institution for the award of any degree or diploma.
 
@@ -76,7 +76,7 @@ B.Tech, Computer Science and Engineering
 
 The exponential growth of digital media and the advent of sophisticated Artificial Intelligence (AI) technologies have brought profound changes to how information is created and consumed. Among these advancements, the creation of synthetic media—popularly known as "Deepfakes"—and AI-generated fake news have emerged as critical threats to digital trust, personal reputation, and societal stability. Deepfakes leverage generative models, primarily Generative Adversarial Networks (GANs) and advanced autoencoders, to manipulate visual and audio content with an unprecedented level of realism. Simultaneously, Large Language Models (LLMs) can generate hyper-realistic fabricated news articles at scale. 
 
-To combat this dual threat, this project proposes **"Anti-Gravity: Neural Verification System v3.0"**, a state-of-the-art, multi-modal AI detection system designed to identify both synthetic multimedia (Deepfakes) and text-based misinformation (Fake News). The system integrates specialized deep neural networks with real-time Global Knowledge Graph verification. For text verification, the system utilizes Natural Language Processing (NLP) models (such as Scikit-Learn based classifiers) paired dynamically with the Wikipedia REST API to perform granular, segment-by-segment cross-referencing of factual claims. For visual media, temporal video forensics are employed using OpenCV and PyTorch. The Vision Forensics Lab extracts temporal frames across a video's timeline and analyzes inconsistencies in metadata and neural rendering patterns to output a unified truth-probability score.
+To combat this dual threat, this project proposes **"Anti-Gravity: Neural Verification System v4.0"**, a state-of-the-art, multi-modal AI detection system designed to identify both synthetic multimedia (Deepfakes) and text-based misinformation (Fake News). The system integrates specialized deep neural networks with real-time Global Knowledge Graph verification. For text verification, the system utilizes Natural Language Processing (NLP) models (such as Scikit-Learn based classifiers) paired dynamically with the Wikipedia REST API to perform granular, segment-by-segment cross-referencing of factual claims. For visual media, temporal video forensics are employed using OpenCV and PyTorch. The Vision Forensics Lab extracts temporal frames across a video's timeline and analyzes inconsistencies in metadata and neural rendering patterns to output a unified truth-probability score.
 
 The entire architecture is served via a high-performance Flask backend and visualized through an immersive, Cyberpunk-themed "Terminal Interface" built with advanced Vanilla JavaScript (incorporating Matrix Digital Rain and Glitch Motion aesthetics). This provides an unparalleled "Forensic Intelligence Log" experience, offering users a transparent, line-by-line breakdown of the verification process. The results demonstrate high accuracy in distinguishing human-generated truth from AI-synthesized deception, offering a scalable solution for content moderators, digital forensics experts, and the general public to navigate the post-truth digital era.
 
@@ -260,7 +260,7 @@ flowchart TD
     N --> O([Forensic Intelligence Dashboard])
 ```
 
-**Description:** The architecture separates the system into a frontend and two parallel backend processing pipelines — NLP for text and Vision for video. Both pipelines feed their confidence scores into a central Truth Aggregator which renders the final forensic output to the user's dashboard.
+**Description:** The architecture separates the system into a frontend and three primary backend pipelines — Auth Module, NLP Engine (forensics.py), and Vision Forensics (forensics.py). Both pipelines feed their confidence scores into a central Truth Aggregator which renders the final forensic output to the user's dashboard.
 
 ---
 

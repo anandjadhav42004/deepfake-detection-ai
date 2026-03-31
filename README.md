@@ -1,4 +1,4 @@
-# 🛸 Anti-Gravity: Neural Verification System v3.0
+# 🛸 Anti-Gravity: Neural Verification System v4.0
 ### **"In a world of synthetic reality, trust the code, not the pixels."**
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/anandjadhav42004/deepfake-detection-ai?style=for-the-badge&color=blue)
@@ -122,48 +122,59 @@ The landing page now includes:
 
 ---
 
-## ⚙️ Deployment Protocol
+## ⚙️ Local Setup
+1. **Clone the Source:**
+   ```bash
+   git clone https://github.com/anandjadhav42004/deepfake-detection-ai.git
+   cd deepfake-detection-ai
+   ```
+2. **Create a virtual environment:**
+   ```bash
+   python -m venv .venv
+   ```
+3. **Activate it:**
+   ```bash
+   source .venv/bin/activate
+   ```
+   On Windows PowerShell:
+   ```powershell
+   .\.venv\Scripts\Activate.ps1
+   ```
+   On Windows Command Prompt:
+   ```bat
+   .venv\Scripts\activate.bat
+   ```
+4. **Install dependencies:**
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+5. **Start the app:**
+   ```bash
+   python backend/run.py
+   ```
+6. **Open the app:** `http://localhost:5001`
 
-### 1. Clone the Source
-```bash
-git clone https://github.com/anandjadhav42004/deepfake-detection-ai.git
-cd deepfake-detection-ai
-2. Initialize Virtual Environment
-python -m venv .venv
-source .venv/bin/activate
-For Windows:
+## 🔐 Environment Variables
+Create `backend/.env` only for values you actually use. For local login and registration, `DATABASE_URL` and `REDIS_URL` are optional. If you leave them unset, the app uses local SQLite plus in-memory rate limiting automatically.
 
-.venv\Scripts\activate
-3. Install Dependencies
-pip install -r backend/requirements.txt
-4. Ignite the System
-python backend/run.py
-5. Access the Platform
-Open:
+Example:
+```env
+GEMINI_API_KEY=your_gemini_api_key
+SECRET_KEY=replace_with_secure_random_string
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_WHATSAPP_NUMBER=whatsapp:+1234567890
+# Optional for local development:
+# DATABASE_URL=postgresql://user:pass@host:port/dbname
+# REDIS_URL=redis://localhost:6379/0
+```
 
-http://localhost:5001
-🔐 Environment Variables
-Create a file named backend/.env and populate it with your credentials:
+If login or registration fails on another machine, first remove placeholder values from `backend/.env` and restart the server.
 
-Variable	Description
-GEMINI_API_KEY	Google Gemini API key
-SECRET_KEY	Secure random Flask secret
-GOOGLE_CLIENT_ID	Google OAuth client ID
-GOOGLE_CLIENT_SECRET	Google OAuth client secret
-TWILIO_ACCOUNT_SID	Twilio account SID
-TWILIO_AUTH_TOKEN	Twilio auth token
-DATABASE_URL	Database connection string
-REDIS_URL	Optional rate-limit / storage configuration
-🚀 Production Deploy
-Procfile is included for deployment
-backend/requirements.txt includes backend/auth/API dependencies
-CORS is enabled for API and forensic endpoints
-Static frontend assets are served through Flask
-Authentication, scan APIs, and webhook flows are integrated in the backend
-🛡️ Built for the Guardians of Digital Truth
-Developed with neural precision by Anand Jadhav.
-
-
-
-
+## 🚀 Production Deploy
+- `Procfile` is included for `gunicorn backend.run:app`
+- `backend/requirements.txt` now includes all auth, API, and webhook dependencies
+- CORS is enabled for API routes and webhook endpoints
 

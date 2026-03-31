@@ -89,11 +89,9 @@ $(document).ready(function () {
     });
 
     function checkSession() {
-        $.get('/me', function (data) {
+        $.get('/auth/me', function (data) {
             if (data.authenticated) {
-                authToken = null;
                 setAuthUI(true);
-                $('#status').text('Session active.');
             } else {
                 showAuth('Sign in or register to unlock your AntiGravity account.');
             }
@@ -135,7 +133,7 @@ $(document).ready(function () {
             return;
         }
         $.ajax({
-            url: '/login',
+            url: '/auth/login',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ email, password }),
@@ -163,7 +161,7 @@ $(document).ready(function () {
             return;
         }
         $.ajax({
-            url: '/register',
+            url: '/auth/register',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ name, email, password }),
@@ -183,7 +181,7 @@ $(document).ready(function () {
     });
 
     $('#logoutBtn').click(function () {
-        $.post('/logout', function () {
+        $.post('/auth/logout', function () {
             setAuthHeader(null);
             setAuthUI(false);
             showAuth('You have been signed out.');
@@ -195,7 +193,7 @@ $(document).ready(function () {
     });
 
     $('#refreshKeyBtn').click(function () {
-        $.post('/refresh_api_key', function (data) {
+        $.post('/auth/refresh_api_key', function (data) {
             if (data.success) {
                 $('#profileApiKey').text(data.api_key);
                 $('#authMessage').text('API key refreshed.');
@@ -216,7 +214,7 @@ $(document).ready(function () {
 
     $('#profileBtn').click(function () {
         showSection('profilePage');
-        $.get('/me', function (data) {
+        $.get('/auth/me', function (data) {
             if (data.authenticated) {
                 $('#profileName').text(data.user.name);
                 $('#profileEmail').text(data.user.email);
@@ -263,7 +261,6 @@ $(document).ready(function () {
             $('#landingPage').addClass('hidden');
             $('#appContainer').removeClass('hidden').css('opacity', '0').css('transform', 'scale(0.9)');
 
-            // Reflow
             $('#appContainer').outerWidth();
 
             $('#appContainer').css('transition', 'all 1s cubic-bezier(0.19, 1, 0.22, 1)')
@@ -295,7 +292,6 @@ $(document).ready(function () {
             $('#appContainer').addClass('hidden');
             $('#landingPage').removeClass('hidden').css('opacity', '0').css('transform', 'scale(1.1)');
 
-            // Reflow
             $('#landingPage').outerWidth();
 
             $('#landingPage').css('transition', 'all 1s cubic-bezier(0.19, 1, 0.22, 1)')
@@ -527,11 +523,20 @@ $(document).ready(function () {
     }
 
     function fetchHistory() {
-        $.get('/history', function (records) {
+        const params = {};
+        const type = $('#historyTypeFilter').val();
+        const result = $('#historyResultFilter').val();
+        const search = $('#historySearchInput').val().trim();
+
+        if (type) params.type = type;
+        if (result) params.result = result;
+        if (search) params.search = search;
+
+        $.get('/history', params, function (records) {
             const tbody = $('#historyTable tbody');
             tbody.empty();
             if (!records || records.length === 0) {
-                tbody.append('<tr><td colspan="5">NO HISTORY AVAILABLE</td></tr>');
+                tbody.append('<tr><td colspan="6">NO MATCHING HISTORY AVAILABLE</td></tr>');
                 return;
             }
             records.forEach(record => {
@@ -542,6 +547,7 @@ $(document).ready(function () {
                         <td>${record.result}</td>
                         <td>${parseFloat(record.confidence).toFixed(1)}%</td>
                         <td>${record.timestamp}</td>
+                        <td><a class="history-report-link" href="/report/${record.scan_id}" target="_blank" rel="noopener noreferrer">EXPORT PDF</a></td>
                     </tr>
                 `);
             });
@@ -551,6 +557,9 @@ $(document).ready(function () {
     }
 
     $('#refreshHistory').click(fetchHistory);
+    $('#historyTypeFilter').change(fetchHistory);
+    $('#historyResultFilter').change(fetchHistory);
+    $('#historySearchInput').on('input', fetchHistory);
 
     // --- ANALYZE TEXT ---
     $('#analyzeTextBtn').click(function () {
@@ -719,33 +728,18 @@ $(document).ready(function () {
 
                 truthScore = Math.max(2, Math.min(98, truthScore));
 
-                const explanation = {
-                    summary: "",
-                    details: []
-                };
-
-                if (truthScore < 40) {
-                    explanation.summary = "Digital artifacts detected in high-frequency facial regions.";
-                    explanation.details = [
-                        "Irregular shadow patterns around eyes and mouth.",
-                        "Unnatural blinking rhythms detected.",
-                        "Compression artifacts inconsistent with standard capture."
-                    ];
-                } else if (truthScore < 60) {
-                    explanation.summary = "Subtle anomalies detected. Structural integrity is within a high margin of error.";
-                    explanation.details = [
-                        "Minor aliasing on perimeter edges.",
-                        "Lighting consistency score is nominal but shows variance.",
-                        "Inconclusive neural patterns—hand-forensic verification recommended."
-                    ];
-                } else {
-                    explanation.summary = "No significant frame-to-frame inconsistencies detected.";
-                    explanation.details = [
-                        "Metadata aligns with captured hardware profile.",
-                        "Natural skin texture gradients maintained.",
-                        "Consistent lighting across spatial planes."
-                    ];
-                }
+        const explanation = {
+            summary: "Temporal Forensic Analysis Complete.",
+            details: isFake ? [
+                "Neural inconsistency detected in facial landmarks.",
+                "Temporal sampling shows frame-to-frame variance in lighting patterns.",
+                "Deepfake signature patterns identified in high-frequency regions."
+            ] : [
+                "No synthetic generation artifacts detected in media frames.",
+                "Facial texture maintains natural structural consistency.",
+                "Metadata and compression profiles align with standard camera hardware."
+            ]
+        };
 
                 setTimeout(() => {
                     updateResultUI(truthScore, explanation);

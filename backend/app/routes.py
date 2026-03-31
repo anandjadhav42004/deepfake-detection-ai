@@ -21,206 +21,22 @@ from bs4 import BeautifulSoup
 from twilio.twiml.messaging_response import MessagingResponse
 from flask_dance.contrib.google import make_google_blueprint, google
 
-load_dotenv()
-
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
-GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
-google_bp = None
-if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
-    google_bp = make_google_blueprint(
-        client_id=GOOGLE_CLIENT_ID,
-        client_secret=GOOGLE_CLIENT_SECRET,
-        scope=['profile', 'email'],
-        redirect_url='/login/google'
-    )
-
-from . import db, login_manager, limiter
+from . import db, login_manager, limiter, get_default_admin_email
 from .models import ScanRecord, User
+from .auth import get_request_user, get_user_info, enforce_quota, google_bp
+from .forensics import vision_model, vision_error, get_wiki_score, analyze_with_gemini
 
 main = Blueprint('main', __name__)
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
-
-class DeepfakeCNN(nn.Module):
-    def __init__(self):
-        super(DeepfakeCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.fc1 = nn.Linear(64 * 32 * 32, 128)
-        self.fc2 = nn.Linear(128, 1)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        x = self.pool(torch.relu(self.conv1(x)))
-        x = self.pool(torch.relu(self.conv2(x)))
-        x = x.view(-1, 64 * 32 * 32)
-        x = torch.relu(self.fc1(x))
-        x = self.sigmoid(self.fc2(x))
-        return x
-
-vision_model = None
-vision_error = None
-
-def load_models():
-    global vision_model, vision_error
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    models_dir = os.path.join(base_dir, '..', '..', 'models')
-    try:
-        vision_model = DeepfakeCNN()
-        path = os.path.join(models_dir, 'deepfake/model.pth')
-        if os.path.exists(path):
-            vision_model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
-            vision_model.eval()
-            vision_error = None
-            print("Vision Model Loaded OK!")
-        else:
-            vision_model = None
-            vision_error = f"Vision model not found: {path}"
-            print(vision_error)
-    except Exception as e:
-        vision_model = None
-        vision_error = str(e)
-        print(f"Vision Model Load Failed: {vision_error}")
-
-load_models()
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    if user_id is None:
-        return None
-    return User.query.get(int(user_id))
-
-
-def create_jwt(user):
-    payload = {
-        'sub': user.id,
-        'name': user.name,
-        'email': user.email,
-        'exp': datetime.utcnow() + timedelta(hours=8)
-    }
-    return jwt_encode(payload, os.getenv('SECRET_KEY', 'antigravity-v4-secret'), algorithm='HS256')
-
-
-def decode_jwt(token):
-    try:
-        data = jwt_decode(token, os.getenv('SECRET_KEY', 'antigravity-v4-secret'), algorithms=['HS256'])
-        return data
-    except ExpiredSignatureError:
-        return None
-    except InvalidTokenError:
-        return None
-
-
-def get_api_user():
-    key = request.headers.get('X-API-KEY') or request.args.get('api_key') or request.form.get('api_key')
-    if not key:
-        return None
-    return User.query.filter_by(api_key=key).first()
-
-
-def get_request_user():
-    if current_user and current_user.is_authenticated:
-        return current_user
-
-    auth_header = request.headers.get('Authorization', '')
-    if auth_header.startswith('Bearer '):
-        token = auth_header.split(' ', 1)[1].strip()
-        claims = decode_jwt(token)
-        if claims:
-            return User.query.get(claims.get('sub'))
-
-    return get_api_user()
-
-
-def enforce_quota(user):
-    if user is None:
-        return False
-    if user.is_premium:
-        return True
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    scan_count = ScanRecord.query.filter(ScanRecord.user_id == user.id, ScanRecord.timestamp >= today_start).count()
-    return scan_count < 10
-
-
-def auth_or_api_required():
-    user = get_request_user()
-    if user is None:
-        return None
-    return user
-
-
-def get_user_info():
-    user = get_request_user()
-    if not user:
-        return None
-    total_scans = ScanRecord.query.filter_by(user_id=user.id).count()
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    scans_today = ScanRecord.query.filter(ScanRecord.user_id == user.id, ScanRecord.timestamp >= today_start).count()
-    return {
-        'user': user.to_dict(),
-        'scans_today': scans_today,
-        'daily_limit': 10 if not user.is_premium else 'unlimited',
-        'total_scans': total_scans
-    }
-
-
-def get_wiki_score(text):
-    stopwords = {"the","is","in","and","to","a","of","for","on","with","as","by","this","that"}
-    words = re.findall(r'\b[A-Za-z0-9]{5,}\b', text)
-    keywords = [w for w in words if w.lower() not in stopwords][:5]
-    if not keywords: return 0.0, []
-    try:
-        r = requests.get("https://en.wikipedia.org/w/api.php",
-            params={"action":"query","list":"search","srsearch":" ".join(keywords),"format":"json"}, timeout=5)
-        results = r.json().get('query',{}).get('search',[])
-        best = 0.0
-        for item in results[:3]:
-            snippet = re.sub(r'<[^>]+>', '', item.get('snippet',''))
-            ratio = difflib.SequenceMatcher(None, text.lower(), snippet.lower()).ratio()
-            if ratio > best: best = ratio
-        return round(best, 2), keywords
-    except:
-        return 0.0, keywords
-
-def analyze_with_gemini(text):
-    try:
-        prompt = f"""You are an expert fact-checker. Analyze this text and respond ONLY in JSON format:
-{{
-  "result": "FAKE" or "REAL" or "UNVERIFIED",
-  "confidence": <0-100>,
-  "reasoning": "<one sentence>",
-  "flags": ["flag1", "flag2"]
-}}
-Text: \"\"\"{text}\"\"\"
-Flags options: sensationalist_language, unverified_claims, scam_pattern, ai_generated, factual_content"""
-
-        if client is None:
-            raise RuntimeError("Gemini client unavailable: missing API key")
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=prompt
-        )
-        raw = response.text.strip().replace("```json", "").replace("```", "").strip()
-        data = json.loads(raw)
-        return {
-            "result": data.get("result", "UNVERIFIED"),
-            "confidence": int(data.get("confidence", 50)),
-            "reasoning": data.get("reasoning", "Analysis complete."),
-            "flags": data.get("flags", [])
-        }
-    except Exception as e:
-        print(f"Gemini Error: {e}")
-        return {"result":"UNVERIFIED","confidence":50,"reasoning":"AI unavailable.","flags":[]}
+# Core application routes
 
 @main.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', default_admin_email=get_default_admin_email())
 
 @main.route('/status')
 def status():
+    from .forensics import client
     gemini_ok = client is not None
     linguistic_error = None if gemini_ok else 'Missing GEMINI_API_KEY in .env'
     return jsonify({
@@ -234,60 +50,7 @@ def status():
     })
 
 
-@main.route('/me')
-def me():
-    user = get_request_user()
-    if not user:
-        return jsonify({'authenticated': False}), 401
-    data = get_user_info()
-    data['authenticated'] = True
-    return jsonify(data)
-
-
-@main.route('/register', methods=['POST'])
-@limiter.limit('3 per minute')
-def register():
-    payload = request.get_json(silent=True) or {}
-    name = payload.get('name', '').strip()
-    email = payload.get('email', '').strip().lower()
-    password = payload.get('password', '')
-    if not name or not email or not password:
-        return jsonify({'success': False, 'message': 'Name, email and password are required.'}), 400
-
-    if User.query.filter_by(email=email).first():
-        return jsonify({'success': False, 'message': 'Email already registered.'}), 400
-
-    user = User(name=name, email=email)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
-    login_user(user)
-    token = create_jwt(user)
-    return jsonify({'success': True, 'message': 'Registration complete.', 'token': token, 'user': user.to_dict()})
-
-
-@main.route('/login', methods=['POST'])
-@limiter.limit('5 per minute')
-def login():
-    payload = request.get_json(silent=True) or {}
-    email = payload.get('email', '').strip().lower()
-    password = payload.get('password', '')
-    if not email or not password:
-        return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
-
-    user = User.query.filter_by(email=email).first()
-    if not user or not user.check_password(password):
-        return jsonify({'success': False, 'message': 'Invalid credentials.'}), 401
-
-    login_user(user)
-    token = create_jwt(user)
-    return jsonify({'success': True, 'message': 'Login successful.', 'token': token, 'user': user.to_dict()})
-
-
-@main.route('/logout', methods=['POST'])
-def logout():
-    logout_user()
-    return jsonify({'success': True, 'message': 'Logged out.'})
+# AUTH ROUTES MOVED TO auth.py
 
 
 @main.route('/dashboard')
@@ -324,12 +87,7 @@ def admin_panel():
     })
 
 
-@main.route('/refresh_api_key', methods=['POST'])
-@login_required
-def refresh_api_key():
-    current_user.refresh_api_key()
-    db.session.commit()
-    return jsonify({'success': True, 'api_key': current_user.api_key})
+# REFRESH_API_KEY MOVED TO auth.py
 
 
 @main.route('/api/user', methods=['GET'])
@@ -570,7 +328,23 @@ def get_history():
     user = get_request_user()
     if not user:
         return jsonify({'message': 'Login required to view history.'}), 401
-    records = ScanRecord.query.filter_by(user_id=user.id).order_by(ScanRecord.timestamp.desc()).limit(10).all()
+
+    scan_type = (request.args.get('type') or '').strip().upper()
+    scan_result = (request.args.get('result') or '').strip().upper()
+    search = (request.args.get('search') or '').strip()
+
+    query = ScanRecord.query.filter_by(user_id=user.id)
+
+    if scan_type in {'TEXT', 'URL', 'MEDIA'}:
+        query = query.filter(ScanRecord.type == scan_type)
+
+    if scan_result in {'REAL', 'FAKE', 'UNVERIFIED'}:
+        query = query.filter(ScanRecord.result == scan_result)
+
+    if search:
+        query = query.filter(ScanRecord.scan_id.ilike(f'%{search}%'))
+
+    records = query.order_by(ScanRecord.timestamp.desc()).limit(25).all()
     return jsonify([r.to_dict() for r in records])
 
 @main.route('/predict_news', methods=['POST'])

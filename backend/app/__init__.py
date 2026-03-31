@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 from flask import Flask
@@ -9,39 +10,71 @@ from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-load_dotenv(os.path.join(BASE_DIR, 'backend', '.env'))
+BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / 'backend' / '.env')
+
+
+def _get_optional_env(name):
+    value = os.getenv(name)
+    if value is None:
+        return None
+
+    normalized = value.strip()
+    if not normalized:
+        return None
+
+    # Ignore README placeholder values so local development falls back cleanly.
+    placeholder_values = {
+        'your_gemini_api_key',
+        'replace_with_secure_random_string',
+        'your_google_client_id',
+        'your_google_client_secret',
+        'your_twilio_sid',
+        'your_twilio_auth_token',
+        'whatsapp:+1234567890',
+        'postgresql://user:pass@host:port/dbname',
+    }
+    if normalized in placeholder_values or normalized.startswith('your_') or normalized.startswith('replace_with_'):
+        return None
+
+    return normalized
 
 
 def get_database_uri():
-    db_url = os.getenv('DATABASE_URL')
-    if db_url and db_url.strip():
-        return db_url.strip()
-    return 'sqlite:///' + os.path.join(BASE_DIR, 'backend_data.db')
+    db_url = _get_optional_env('DATABASE_URL')
+    if db_url:
+        return db_url
+
+    db_path = (BASE_DIR / 'backend_data.db').resolve()
+    return f"sqlite:///{db_path.as_posix()}"
 
 
 def get_rate_limit_storage_uri():
-    redis_url = os.getenv('REDIS_URL')
-    if redis_url and redis_url.strip():
-        return redis_url.strip()
+    redis_url = _get_optional_env('REDIS_URL')
+    if redis_url:
+        return redis_url
     return 'memory://'
+
+
+def get_default_admin_email():
+    return (_get_optional_env('ADMIN_EMAIL') or 'admin@gmail.com').strip()
+
+
+def get_default_admin_password():
+    return (_get_optional_env('ADMIN_PASSWORD') or 'admin123').strip()
 
 
 def _ensure_default_admin():
     from .models import User
 
-    default_admin_email = os.getenv('ADMIN_EMAIL', 'admin@antigravity.local').strip()
-    default_admin_password = os.getenv('ADMIN_PASSWORD', 'Admin123!').strip()
+    default_admin_email = get_default_admin_email()
+    default_admin_password = get_default_admin_password()
 
     if not default_admin_email or not default_admin_password:
         return
 
-    current_admin = User.query.filter_by(is_admin=True).first()
-    if current_admin:
-        return
-
-    existing = User.query.filter_by(email=default_admin_email).first()
-    if existing is None:
+    default_user = User.query.filter_by(email=default_admin_email).first()
+    if default_user is None:
         admin_user = User(
             name='Administrator',
             email=default_admin_email,
@@ -53,9 +86,12 @@ def _ensure_default_admin():
         db.session.commit()
         print(f"Created default admin user: {default_admin_email}")
     else:
-        existing.is_admin = True
+        default_user.is_admin = True
+        default_user.is_premium = True
+        if not default_user.password_hash:
+            default_user.set_password(default_admin_password)
         db.session.commit()
-        print(f"Updated existing user to admin: {default_admin_email}")
+        print(f"Ensured default admin user: {default_admin_email}")
 
 
 def _migrate_database():
@@ -81,13 +117,13 @@ limiter = Limiter(
 
 
 class BaseConfig:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'antigravity-v4-secret')
+    SECRET_KEY = _get_optional_env('SECRET_KEY') or 'antigravity-v4-secret'
     SQLALCHEMY_DATABASE_URI = get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = 32 * 1024 * 1024
     UPLOAD_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.mp4', '.mov', '.avi']
-    UPLOAD_PATH = os.path.join(BASE_DIR, 'backend', 'tmp_uploads')
-    JWT_SECRET_KEY = os.getenv('SECRET_KEY', 'antigravity-v4-secret')
+    UPLOAD_PATH = str(BASE_DIR / 'backend' / 'tmp_uploads')
+    JWT_SECRET_KEY = _get_optional_env('SECRET_KEY') or 'antigravity-v4-secret'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=8)
     CORS_RESOURCES = {r"/api/*": {"origins": "*"}, r"/webhook/*": {"origins": "*"}, r"/*": {"origins": "*"}}
 
@@ -101,8 +137,8 @@ class ProductionConfig(BaseConfig):
 
 
 def create_app(config_name=None):
-    template_folder = os.path.join(BASE_DIR, 'frontend', 'templates')
-    static_folder = os.path.join(BASE_DIR, 'frontend', 'static')
+    template_folder = str(BASE_DIR / 'frontend' / 'templates')
+    static_folder = str(BASE_DIR / 'frontend' / 'static')
 
     app = Flask(
         __name__,
@@ -127,11 +163,14 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     limiter.init_app(app)
 
-    login_manager.login_view = 'main.login'
+    login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access AntiGravity.'
 
-    from app.routes import main, google_bp
+    from app.routes import main
+    from app.auth import auth, google_bp, load_user
     app.register_blueprint(main)
+    app.register_blueprint(auth, url_prefix='/auth')
+
     if google_bp is not None:
         app.register_blueprint(google_bp, url_prefix='/login')
 

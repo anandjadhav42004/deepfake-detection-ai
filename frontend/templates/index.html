@@ -27,10 +27,8 @@
     <div class="grain-overlay"></div>
 
     <nav class="navbar">
-        <div class="logo">ANTI<span class="highlight">GRAVITY</span> <span class="version">v3.0</span></div>
+        <div class="logo">ANTI<span class="highlight">GRAVITY</span> <span class="version">v4.0</span></div>
         <div class="nav-actions">
-            <button id="openLoginBtn" class="theme-btn auth-nav-btn">SIGN IN</button>
-            <button id="openRegisterBtn" class="theme-btn auth-nav-btn auth-nav-primary">CREATE ACCOUNT</button>
             <button id="themeToggle" class="theme-btn">LIGHT MODE</button>
             <button id="openHistoryBtn" class="theme-btn hidden">SCAN HISTORY</button>
             <button id="profileBtn" class="theme-btn hidden">PROFILE</button>
@@ -84,12 +82,16 @@
                 <div class="hero-copy">
                     <div class="hero-kicker">ANTI-GRAVITY // NEURAL VERIFICATION SYSTEM</div>
                     <h1 class="hero-title" data-text="AUTHENTICITY">AUTHENTICITY</h1>
-                    <p class="hero-tagline">AI-powered Deepfake and Fake News Detection System</p>
+                    <p class="hero-tagline">Soft intelligence for deepfake detection, source review, and media trust.</p>
                     <p class="hero-description">
-                        AntiGravity is a cybersecurity-focused authenticity platform that inspects text, URLs, images,
-                        and video for signs of manipulation, synthetic generation, and misinformation using layered AI
-                        forensic analysis.
+                        AntiGravity brings together text analysis, URL verification, and media forensics in one calm,
+                        cinematic workspace built to help you inspect suspicious content with clarity instead of noise.
                     </p>
+                    <div class="hero-intel-band">
+                        <span class="intel-chip">TEXT VERIFICATION</span>
+                        <span class="intel-chip">URL FORENSICS</span>
+                        <span class="intel-chip">MEDIA INTEGRITY</span>
+                    </div>
                     <div class="entry-points product-cta">
                         <button class="scan-entry-btn text-entry" data-target="text-panel">
                             <span class="scan-icon" aria-hidden="true">
@@ -130,37 +132,37 @@
                     </div>
                     <div class="system-stats-grid">
                         <div class="system-stat">
-                            <span class="stat-value">97%</span>
-                            <span class="stat-label">Detection accuracy</span>
+                            <span class="stat-value">Layered</span>
+                            <span class="stat-label">Forensic review</span>
                         </div>
                         <div class="system-stat">
-                            <span class="stat-value">Real-time</span>
-                            <span class="stat-label">Neural analysis</span>
+                            <span class="stat-value">Fast</span>
+                            <span class="stat-label">Scan workflow</span>
                         </div>
                         <div class="system-stat">
-                            <span class="stat-value">Multi-layer</span>
-                            <span class="stat-label">Forensic scoring</span>
+                            <span class="stat-value">Clear</span>
+                            <span class="stat-label">Verdict output</span>
                         </div>
                     </div>
                 </div>
                 <aside class="hero-telemetry-card">
                     <div class="telemetry-header">
                         <span class="telemetry-badge">LIVE ANALYSIS</span>
-                        <span class="telemetry-status">LOW RISK</span>
+                        <span class="telemetry-status">SYSTEM READY</span>
                     </div>
                     <div class="telemetry-score-ring">
                         <div class="score-core">
-                            <span class="score-number">92%</span>
-                            <span class="score-label">Authenticity Score</span>
+                            <span class="score-number">3X</span>
+                            <span class="score-label">Scan Modes</span>
                         </div>
                     </div>
                     <div class="telemetry-lines">
-                        <div class="telemetry-line"><span>01</span> Analyzing frames...</div>
-                        <div class="telemetry-line"><span>02</span> Detecting artifacts...</div>
-                        <div class="telemetry-line"><span>03</span> Cross-checking neural patterns...</div>
+                        <div class="telemetry-line"><span>01</span> Text credibility screening</div>
+                        <div class="telemetry-line"><span>02</span> URL source verification</div>
+                        <div class="telemetry-line"><span>03</span> Image and video inspection</div>
                     </div>
                     <div class="telemetry-footer">
-                        <div class="intel-chip">FORENSIC ENGINE ACTIVE</div>
+                        <div class="intel-chip">SOFT UI / FAST FLOW</div>
                         <div class="intel-chip">REPORT PIPELINE ONLINE</div>
                     </div>
                 </aside>
@@ -169,7 +171,7 @@
             <section class="landing-section">
                 <div class="section-heading">
                     <span class="section-kicker">CORE FEATURES</span>
-                    <h2>Built for authenticity verification at production speed.</h2>
+                    <h2>Built for confidence, speed, and readable forensic output.</h2>
                 </div>
                 <div class="core-features-grid">
                     <article class="core-feature-card">
@@ -193,7 +195,7 @@
             <section class="landing-section">
                 <div class="section-heading">
                     <span class="section-kicker">HOW IT WORKS</span>
-                    <h2>Three steps from upload to forensic decision.</h2>
+                    <h2>Three simple steps from content input to trust decision.</h2>
                 </div>
                 <div class="workflow-grid">
                     <article class="workflow-step">
@@ -312,9 +314,24 @@
         <!-- History Page -->
         <div id="historyPage" class="scanner-page hidden">
             <h1 class="main-title glitched" data-text="SCAN_HISTORY">SCAN_HISTORY</h1>
-            <p class="subtitle history-accent">LAST 10 TRANSACTIONS FROM THE FORENSIC LOGGER</p>
+            <p class="subtitle history-accent">FILTER, REVIEW, AND EXPORT YOUR LATEST FORENSIC TRANSACTIONS</p>
             <div class="history-panel">
                 <div class="history-actions">
+                    <div class="history-filters">
+                        <select id="historyTypeFilter" class="history-control">
+                            <option value="">ALL TYPES</option>
+                            <option value="TEXT">TEXT</option>
+                            <option value="URL">URL</option>
+                            <option value="MEDIA">MEDIA</option>
+                        </select>
+                        <select id="historyResultFilter" class="history-control">
+                            <option value="">ALL RESULTS</option>
+                            <option value="REAL">REAL</option>
+                            <option value="FAKE">FAKE</option>
+                            <option value="UNVERIFIED">UNVERIFIED</option>
+                        </select>
+                        <input id="historySearchInput" class="history-control history-search" type="text" placeholder="SEARCH SCAN ID">
+                    </div>
                     <button id="refreshHistory" class="cyber-btn small">REFRESH LOG</button>
                 </div>
                 <div class="history-table-wrap">
@@ -326,6 +343,7 @@
                                 <th>RESULT</th>
                                 <th>CONFIDENCE</th>
                                 <th>TIMESTAMP</th>
+                                <th>REPORT</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
