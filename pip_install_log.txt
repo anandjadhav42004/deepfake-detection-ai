@@ -1,1 +1,0 @@
-Using pip 24.2 from /Users/anand/Desktop/p2/deepfake-detection-ai/venv/lib/python3.12/site-packages/pip (python 3.12)
