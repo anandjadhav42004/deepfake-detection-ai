@@ -65,6 +65,10 @@ class ScanRecord(db.Model):
         return f'<ScanRecord {self.scan_id} {self.type} {self.result}>'
 
     def to_dict(self):
+        try:
+            details = json.loads(self.details) if self.details else {}
+        except (TypeError, json.JSONDecodeError):
+            details = {}
         return {
             'id': self.id,
             'scan_id': self.scan_id,
@@ -72,6 +76,6 @@ class ScanRecord(db.Model):
             'type': self.type,
             'result': self.result,
             'confidence': round(self.confidence, 2),
-            'details': json.loads(self.details) if self.details else {},
+            'details': details,
             'timestamp': self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         }

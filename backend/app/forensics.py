@@ -13,7 +13,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+# The bundled local fake-news model is always available. External Gemini calls
+# are opt-in so an unreachable provider can never stall the scan endpoint.
+USE_GEMINI = os.getenv('ENABLE_GEMINI', '').strip().lower() in {'1', 'true', 'yes'}
+client = genai.Client(api_key=GEMINI_API_KEY, http_options={'timeout': 5000}) if (GEMINI_API_KEY and USE_GEMINI) else None
 
 class DeepfakeCNN(nn.Module):
     def __init__(self):
@@ -65,7 +68,7 @@ def get_wiki_score(text):
     if not keywords: return 0.0, []
     try:
         r = requests.get("https://en.wikipedia.org/w/api.php",
-            params={"action":"query","list":"search","srsearch":" ".join(keywords),"format":"json"}, timeout=5)
+            params={"action":"query","list":"search","srsearch":" ".join(keywords),"format":"json"}, timeout=3)
         results = r.json().get('query',{}).get('search',[])
         best = 0.0
         for item in results[:3]:
@@ -156,4 +159,3 @@ def analyze_webcam_frame(image_base64):
     except Exception as e:
         print(f"Webcam Analysis Error: {e}")
         return {"error": str(e)}
-

@@ -13,6 +13,8 @@ import torch
 import torch.nn as nn
 import requests
 import difflib
+import logging
+from urllib.parse import urlparse
 from torchvision import transforms
 from PIL import Image
 from dotenv import load_dotenv
@@ -27,6 +29,17 @@ from .auth import get_request_user, get_user_info, enforce_quota, google_bp
 from .forensics import vision_model, vision_error, get_wiki_score, analyze_with_gemini, analyze_webcam_frame
 
 main = Blueprint('main', __name__)
+logger = logging.getLogger(__name__)
+
+
+def error_response(message, status=400):
+    """Use one JSON error shape for every scanner endpoint."""
+    return jsonify({'success': False, 'result': 'Error', 'message': message}), status
+
+
+def valid_public_url(value):
+    parsed = urlparse(value.strip())
+    return parsed.scheme in {'http', 'https'} and bool(parsed.netloc)
 
 # Core application routes
 
@@ -39,7 +52,7 @@ def index():
 def predict_news_local():
     text = request.form.get('text', '')
     if not text:
-        return jsonify({'result': 'Error', 'message': 'No text provided'})
+        return error_response('No text provided')
 
     # 0. Scam Detection Heuristic
     scam_keywords = ["urgent", "compromised", "verify your identity", "lockout", "secure-verify", "bank account", "lottery", "prize", "free money", "winner"]
@@ -158,11 +171,19 @@ def predict_news_local():
         summary = "No verified factual anchors found in public databases. Detection based on linguistic neural weights."
         forensic_log.append("WARNING: Source cross-reference failure across major verification nodes.")
 
+    return jsonify({
+        'result': result,
+        'confidence': confidence,
+        'forensic_details': forensic_log,
+        'summary': summary
+    })
+
 @main.route('/status')
 def status():
     from .forensics import client
-    gemini_ok = client is not None
-    linguistic_error = None if gemini_ok else 'Missing GEMINI_API_KEY in .env'
+    from . import nlp_model
+    gemini_ok = client is not None or nlp_model is not None
+    linguistic_error = None if gemini_ok else 'No linguistic model is available.'
     return jsonify({
         'neural_engine': vision_model is not None,
         'linguistic_engine': gemini_ok,
@@ -178,18 +199,20 @@ def status():
 
 
 @main.route('/dashboard')
-@login_required
 def dashboard():
+    user = get_request_user()
+    if not user:
+        return error_response('Authentication required.', 401)
     data = get_user_info()
     data['message'] = 'Dashboard loaded.'
     return jsonify(data)
 
 
 @main.route('/admin')
-@login_required
 def admin_panel():
-    if not current_user.is_admin:
-        return jsonify({'message': 'Admin access required.'}), 403
+    user = get_request_user()
+    if not user or not user.is_admin:
+        return error_response('Admin access required.', 403)
 
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=7)
@@ -227,14 +250,14 @@ def api_user_info():
 def api_scan_text():
     user = get_request_user()
     if not user:
-        return jsonify({'result': 'Error', 'message': 'API key or login required.'}), 401
+        return error_response('API key or login required.', 401)
     if not enforce_quota(user):
-        return jsonify({'result': 'Error', 'message': 'Daily scan limit reached for free tier.'}), 429
+        return error_response('Daily scan limit reached for free tier.', 429)
 
     payload = request.get_json(silent=True) or {}
     text = payload.get('text') or request.form.get('text', '')
     if not text:
-        return jsonify({'result': 'Error', 'message': 'Empty Stream'}), 400
+        return error_response('Text is required.')
 
     gemini = analyze_with_gemini(text)
     wiki_ratio, keywords = get_wiki_score(text)
@@ -266,24 +289,27 @@ def api_scan_text():
 def api_scan_url():
     user = get_request_user()
     if not user:
-        return jsonify({'result': 'Error', 'message': 'API key or login required.'}), 401
+        return error_response('API key or login required.', 401)
     if not enforce_quota(user):
-        return jsonify({'result': 'Error', 'message': 'Daily scan limit reached for free tier.'}), 429
+        return error_response('Daily scan limit reached for free tier.', 429)
 
     payload = request.get_json(silent=True) or {}
     url = payload.get('url') or request.form.get('url', '')
     if not url:
-        return jsonify({'result': 'Error', 'message': 'No URL provided'}), 400
+        return error_response('A URL is required.')
+    if not valid_public_url(url):
+        return error_response('Enter a complete HTTP or HTTPS URL.')
 
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
         r = requests.get(url, headers=headers, timeout=8)
+        r.raise_for_status()
         soup = BeautifulSoup(r.content, 'html.parser')
         for tag in soup(['script', 'style', 'nav', 'footer']):
             tag.decompose()
         text = soup.get_text(separator=' ', strip=True)[:3000]
         if not text:
-            return jsonify({'result': 'Error', 'message': 'Could not extract content'}), 400
+            return error_response('Could not extract readable content from that URL.')
 
         gemini = analyze_with_gemini(f'This is content from URL: {url}\n\n{text}')
         wiki_ratio, keywords = get_wiki_score(text[:500])
@@ -308,8 +334,12 @@ def api_scan_url():
             ],
             'scan_id': scan_id
         })
-    except Exception as e:
-        return jsonify({'result': 'Error', 'message': str(e)}), 500
+    except requests.RequestException as exc:
+        logger.warning('URL scan request failed for %s: %s', url, exc)
+        return error_response('Unable to retrieve that URL. Check that it is publicly reachable.', 422)
+    except Exception:
+        logger.exception('URL scan failed for %s', url)
+        return error_response('URL analysis failed. Please try again.', 500)
 
 
 @main.route('/api/scan/media', methods=['POST'])
@@ -317,15 +347,20 @@ def api_scan_url():
 def api_scan_media():
     user = get_request_user()
     if not user:
-        return jsonify({'result': 'Error', 'message': 'API key or login required.'}), 401
+        return error_response('API key or login required.', 401)
     if not enforce_quota(user):
-        return jsonify({'result': 'Error', 'message': 'Daily scan limit reached for free tier.'}), 429
+        return error_response('Daily scan limit reached for free tier.', 429)
 
     if 'file' not in request.files:
-        return jsonify({'result': 'Error', 'message': 'No Payload'}), 400
+        return error_response('Choose an image or video file first.')
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'result': 'Error', 'message': 'Empty Payload'}), 400
+        return error_response('Choose an image or video file first.')
+    extension = os.path.splitext(file.filename)[1].lower()
+    if extension not in {'.png', '.jpg', '.jpeg', '.bmp', '.gif', '.mp4', '.mov', '.avi'}:
+        return error_response('Unsupported media type. Upload an image or MP4, MOV, or AVI video.')
+    if vision_model is None:
+        return error_response(vision_error or 'The vision model is unavailable.', 503)
 
     preprocess = transforms.Compose([
         transforms.Resize((128, 128)),
@@ -335,7 +370,8 @@ def api_scan_media():
     scores = []
     is_video = file.filename.lower().endswith(('.mp4', '.avi', '.mov'))
     try:
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1])
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
+        tmp.close()
         file.save(tmp.name)
         if is_video:
             cap = cv2.VideoCapture(tmp.name)
@@ -352,7 +388,8 @@ def api_scan_media():
             img = Image.open(tmp.name).convert('RGB')
             with torch.no_grad():
                 scores.append(vision_model(preprocess(img).unsqueeze(0)).item())
-        os.unlink(tmp.name)
+        if os.path.exists(tmp.name):
+            os.unlink(tmp.name)
         avg = sum(scores) / len(scores) if scores else 0.5
         result, confidence = ('FAKE', avg * 100) if avg > 0.5 else ('REAL', (1 - avg) * 100)
         scan_id = f'AG-{uuid.uuid4().hex[:8].upper()}'
@@ -360,8 +397,11 @@ def api_scan_media():
         db.session.add(record)
         db.session.commit()
         return jsonify({'result': result, 'confidence': round(confidence, 2), 'scan_id': scan_id})
-    except Exception as e:
-        return jsonify({'result': 'Error', 'message': str(e)}), 500
+    except Exception:
+        logger.exception('Media scan failed for %s', file.filename)
+        if 'tmp' in locals() and os.path.exists(tmp.name):
+            os.unlink(tmp.name)
+        return error_response('Media analysis failed. Ensure the file is a valid image or video.', 422)
 
 
 @main.route('/api/scan/webcam', methods=['POST'])
@@ -369,7 +409,7 @@ def api_scan_media():
 def api_scan_webcam():
     user = get_request_user()
     if not user:
-        return jsonify({'result': 'Error', 'message': 'API key or login required.'}), 401
+        return error_response('API key or login required.', 401)
     
     # Optional quota enforcement (higher limit for webcam frames)
     # if not enforce_quota(user):
@@ -378,11 +418,12 @@ def api_scan_webcam():
     payload = request.get_json(silent=True) or {}
     frame_base64 = payload.get('image')
     if not frame_base64:
-        return jsonify({'result': 'Error', 'message': 'No frame received.'}), 400
+        return error_response('No camera frame was received.')
 
     report = analyze_webcam_frame(frame_base64)
     if 'error' in report:
-        return jsonify({'result': 'Error', 'message': report['error']}), 500
+        logger.warning('Webcam scan failed: %s', report['error'])
+        return error_response(report['error'], 503)
 
     # Optimization: Store trace only every few frames or on high confidence FAKE
     # For now, we store if we have a scan_id request and it's fakish? 
@@ -466,6 +507,9 @@ def report(scan_id):
     record = ScanRecord.query.filter_by(scan_id=scan_id).first()
     if not record:
         return jsonify({'message': 'Scan ID not found.'}), 404
+    user = get_request_user()
+    if not user or (record.user_id and record.user_id != user.id and not user.is_admin):
+        return error_response('You do not have access to this report.', 403)
 
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -508,7 +552,7 @@ def get_history():
 
     query = ScanRecord.query.filter_by(user_id=user.id)
 
-    if scan_type in {'TEXT', 'URL', 'MEDIA'}:
+    if scan_type in {'TEXT', 'URL', 'MEDIA', 'WEBCAM'}:
         query = query.filter(ScanRecord.type == scan_type)
 
     if scan_result in {'REAL', 'FAKE', 'UNVERIFIED'}:

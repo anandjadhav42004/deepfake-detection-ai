@@ -1,8 +1,10 @@
 import os
+import pickle
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, jsonify, request
+from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
@@ -116,6 +118,19 @@ limiter = Limiter(
     in_memory_fallback_enabled=True
 )
 
+# Load NLP fake-news models at module import time
+_NLP_DIR = BASE_DIR / 'models' / 'fake_news'
+nlp_model = None
+nlp_vectorizer = None
+try:
+    with open(_NLP_DIR / 'model.pkl', 'rb') as _f:
+        nlp_model = pickle.load(_f)
+    with open(_NLP_DIR / 'vectorizer.pkl', 'rb') as _f:
+        nlp_vectorizer = pickle.load(_f)
+    print('NLP fake-news models loaded OK.')
+except Exception as _nlp_err:
+    print(f'NLP model load skipped: {_nlp_err}')
+
 
 class BaseConfig:
     SECRET_KEY = _get_optional_env('SECRET_KEY') or 'antigravity-v4-secret'
@@ -159,7 +174,9 @@ def create_app(config_name=None):
 
     os.makedirs(app.config['UPLOAD_PATH'], exist_ok=True)
 
-    CORS(app, resources=app.config['CORS_RESOURCES'])
+    # The application is normally served by Flask itself, but these settings also
+    # allow the static client to be hosted separately during development.
+    CORS(app, resources=app.config['CORS_RESOURCES'], supports_credentials=False)
     db.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
@@ -179,5 +196,20 @@ def create_app(config_name=None):
         db.create_all()
         _migrate_database()
         _ensure_default_admin()
+
+    @app.errorhandler(HTTPException)
+    def handle_http_error(error):
+        """Keep API failures machine-readable instead of returning Flask HTML."""
+        if request.path.startswith(('/api/', '/auth/', '/predict_', '/history', '/admin', '/dashboard', '/status')):
+            app.logger.warning('%s %s: %s', request.method, request.path, error)
+            return jsonify({'success': False, 'result': 'Error', 'message': error.description}), error.code
+        return error
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        app.logger.exception('Unhandled error while processing %s %s', request.method, request.path)
+        if request.path.startswith(('/api/', '/auth/', '/predict_', '/history', '/admin', '/dashboard', '/status')):
+            return jsonify({'success': False, 'result': 'Error', 'message': 'An internal server error occurred.'}), 500
+        return jsonify({'success': False, 'message': 'An internal server error occurred.'}), 500
 
     return app

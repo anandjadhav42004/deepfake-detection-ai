@@ -1,4 +1,18 @@
 $(document).ready(function () {
+    // Flask serves the app on :5001, while local static preview runs on :3000.
+    // Keep both launch modes working without changing the UI.
+    const API_BASE = window.location.port === '5001' ? '' : 'http://127.0.0.1:5001';
+    const apiUrl = (path) => `${API_BASE}${path}`;
+    // Keep unexpected client failures visible while making sure a scan can never
+    // leave the blocking loading overlay on screen indefinitely.
+    window.addEventListener('error', function (event) {
+        console.error('AntiGravity client error:', event.error || event.message);
+        resetProcess();
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+        console.error('AntiGravity unhandled request error:', event.reason);
+        resetProcess();
+    });
     $(window).on('load', function() {
         $('.hero-title').addClass('revealed');
     });
@@ -42,10 +56,10 @@ $(document).ready(function () {
     setAuthHeader(authToken);
 
     function setAuthUI(isAuthenticated) {
-        loggedIn = true;
-        $('#openHistoryBtn').removeClass('hidden');
-        $('#profileBtn').removeClass('hidden');
-        $('#logoutBtn').addClass('hidden');
+        loggedIn = Boolean(isAuthenticated);
+        $('#openHistoryBtn').toggleClass('hidden', !loggedIn);
+        $('#profileBtn').toggleClass('hidden', !loggedIn);
+        $('#logoutBtn').toggleClass('hidden', !loggedIn);
         $('#landingPage').removeClass('hidden');
         $('.scanner-page').addClass('hidden');
         $('#resultsDisplay').addClass('hidden');
@@ -53,32 +67,27 @@ $(document).ready(function () {
     }
 
     function checkSession() {
-        $.get('/auth/me', function (data) {
+        $.get(apiUrl('/auth/me'), function (data) {
             setAuthUI(Boolean(data.authenticated));
         }).fail(function () {
-            setAuthUI(true);
+            setAuthUI(false);
         });
     }
 
     function updateSystemStatus(data) {
-        if (!data.neural_engine || !data.linguistic_engine) {
-            let errorMsg = 'One or more AI models failed to initialize.';
+        if (!data.neural_engine) {
+            let errorMsg = 'The vision model failed to initialize.';
             if (!data.neural_engine && data.neural_error) {
                 errorMsg += '\n\nDeepfake Model Error: ' + data.neural_error;
             }
-            if (!data.linguistic_engine && data.linguistic_error) {
-                errorMsg += '\n\nLinguistic Model Error: ' + data.linguistic_error;
-            }
             $('#errorMessage').text(errorMsg);
             $('#errorModal').removeClass('hidden');
-            $('.cyber-btn').prop('disabled', true);
         }
     }
 
-    $.get('/status', updateSystemStatus).fail(function () {
+    $.get(apiUrl('/status'), updateSystemStatus).fail(function () {
         $('#errorMessage').text('Failed to connect to the server. Please ensure the backend is running.');
         $('#errorModal').removeClass('hidden');
-        $('.cyber-btn').prop('disabled', true);
     });
 
     $('#closeError').click(function () {
@@ -86,7 +95,7 @@ $(document).ready(function () {
     });
 
     $('#logoutBtn').click(function () {
-        $.post('/auth/logout', function () {
+        $.post(apiUrl('/auth/logout'), function () {
             setAuthHeader(null);
             setAuthUI(true);
         }).fail(function () {
@@ -96,7 +105,7 @@ $(document).ready(function () {
     });
 
     $('#refreshKeyBtn').click(function () {
-        $.post('/auth/refresh_api_key', function (data) {
+        $.post(apiUrl('/auth/refresh_api_key'), function (data) {
             if (data.success) {
                 $('#profileApiKey').text(data.api_key);
                 $('#authMessage').text('API key refreshed.');
@@ -117,7 +126,7 @@ $(document).ready(function () {
 
     $('#profileBtn').click(function () {
         showSection('profilePage');
-        $.get('/auth/me', function (data) {
+        $.get(apiUrl('/auth/me'), function (data) {
             if (data.authenticated) {
                 $('#profileName').text(data.user.name);
                 $('#profileEmail').text(data.user.email);
@@ -357,12 +366,16 @@ $(document).ready(function () {
                 /* ignore invalid JSON */
             }
         }
+        console.error('AntiGravity API error:', xhr && xhr.status, message, xhr);
         alert(message);
         resetProcess();
     }
 
-    function updateResultUI(truthScore, explanation) {
+    let latestScanId = null;
+
+    function updateResultUI(truthScore, explanation, scanId) {
         resetProcess();
+        latestScanId = scanId || null;
         $('#resultsDisplay').removeClass('hidden').css('opacity', '0').css('transform', 'translateY(20px)');
 
         // Animated Entrance
@@ -389,7 +402,7 @@ $(document).ready(function () {
 
         // Update Metadata
         const now = new Date();
-        $('#scanId').text(`#AG-${Math.floor(Math.random() * 9000 + 1000)}-${(Math.random() + 1).toString(36).substring(7).toUpperCase()}`);
+        $('#scanId').text(latestScanId || 'NOT AVAILABLE');
         $('#scanTime').text(now.toISOString().replace('T', ' ').substring(0, 16));
 
         // Update Intelligence Metrics
@@ -447,6 +460,14 @@ $(document).ready(function () {
         }, 800);
     }
 
+    $('#generateReportBtn').click(function () {
+        if (!latestScanId) {
+            alert('Complete a scan before generating a report.');
+            return;
+        }
+        window.open(apiUrl(`/report/${encodeURIComponent(latestScanId)}`), '_blank', 'noopener');
+    });
+
     function fetchHistory() {
         const params = {};
         const type = $('#historyTypeFilter').val();
@@ -457,7 +478,7 @@ $(document).ready(function () {
         if (result) params.result = result;
         if (search) params.search = search;
 
-        $.get('/history', params, function (records) {
+        $.get(apiUrl('/history'), params, function (records) {
             const tbody = $('#historyTable tbody');
             tbody.empty();
             if (!records || records.length === 0) {
@@ -472,7 +493,7 @@ $(document).ready(function () {
                         <td>${record.result}</td>
                         <td>${parseFloat(record.confidence).toFixed(1)}%</td>
                         <td>${record.timestamp}</td>
-                        <td><a class="history-report-link" href="/report/${record.scan_id}" target="_blank" rel="noopener noreferrer">EXPORT PDF</a></td>
+                        <td><a class="history-report-link" href="${apiUrl(`/report/${encodeURIComponent(record.scan_id)}`)}" target="_blank" rel="noopener noreferrer">EXPORT PDF</a></td>
                     </tr>
                 `);
             });
@@ -500,7 +521,10 @@ $(document).ready(function () {
         ];
         initProcess(onlineMessages);
 
-        $.post('/predict_news', { text: text }, function (data) {
+        $.ajax({
+            url: apiUrl('/api/scan/text'), type: 'POST', contentType: 'application/json',
+            data: JSON.stringify({ text: text }), dataType: 'json', timeout: 30000
+        }).done(function (data) {
             if (data.result === 'Error') { alert(data.message); resetProcess(); return; }
 
             const isFake = (data.result === 'FAKE');
@@ -514,7 +538,7 @@ $(document).ready(function () {
             };
 
             setTimeout(() => {
-                updateResultUI(truthScore, explanation);
+                updateResultUI(truthScore, explanation, data.scan_id);
             }, 1500);
 
         }).fail(function (xhr) { showAjaxError(xhr); });
@@ -534,7 +558,10 @@ $(document).ready(function () {
         ];
         initProcess(urlMessages);
 
-        $.post('/predict_url', { url: url }, function (data) {
+        $.ajax({
+            url: apiUrl('/api/scan/url'), type: 'POST', contentType: 'application/json',
+            data: JSON.stringify({ url: url }), dataType: 'json', timeout: 30000
+        }).done(function (data) {
             if (data.result === 'Error') { alert(data.message); resetProcess(); return; }
 
             let backendConfidence = parseFloat(data.confidence) || 0;
@@ -546,7 +573,7 @@ $(document).ready(function () {
             };
 
             setTimeout(() => {
-                updateResultUI(truthScore, explanation);
+                updateResultUI(truthScore, explanation, data.scan_id);
             }, 1500);
         }).fail(function (xhr) { showAjaxError(xhr); });
     });
@@ -620,11 +647,12 @@ $(document).ready(function () {
         formData.append('file', currentFile);
 
         $.ajax({
-            url: '/predict_deepfake',
+            url: apiUrl('/api/scan/media'),
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
+            timeout: 60000,
             success: function (data) {
                 if (data.result === 'Error') { alert(data.message); resetProcess(); return; }
 
@@ -655,7 +683,7 @@ $(document).ready(function () {
         };
 
                 setTimeout(() => {
-                    updateResultUI(truthScore, explanation);
+                    updateResultUI(truthScore, explanation, data.scan_id);
                 }, 2500);
             },
             error: function (xhr) { showAjaxError(xhr, 'NEURAL LINK SEVERED'); }
@@ -665,6 +693,7 @@ $(document).ready(function () {
     // --- LIVE WEBCAM SCANNER ---
     let webcamStream = null;
     let webcamInterval = null;
+    let webcamRequestInFlight = false;
     const WEBCAM_POLL_MS = 800;
 
     async function startWebcam() {
@@ -720,7 +749,7 @@ $(document).ready(function () {
     function captureAndScan() {
         const video = document.getElementById('webcamFeed');
         const canvas = document.getElementById('captureCanvas');
-        if (!video || !canvas || video.paused || video.ended) return;
+        if (!video || !canvas || video.paused || video.ended || !video.videoWidth || webcamRequestInFlight) return;
 
         const ctx = canvas.getContext('2d');
         canvas.width = video.videoWidth;
@@ -731,16 +760,24 @@ $(document).ready(function () {
         
         const base64Image = canvas.toDataURL('image/jpeg', 0.7);
 
+        webcamRequestInFlight = true;
         $.ajax({
-            url: '/api/scan/webcam',
+            url: apiUrl('/api/scan/webcam'),
             type: 'POST',
             data: JSON.stringify({ image: base64Image }),
             contentType: 'application/json',
+            timeout: 10000,
             success: function(data) {
                 updateWebcamUI(data);
             },
-            error: function(err) {
-                console.error("Webcam scan failure", err);
+            error: function(xhr) {
+                const message = (xhr.responseJSON && xhr.responseJSON.message) || 'Camera frame analysis failed.';
+                console.error("Webcam scan failure", xhr.status, message, xhr);
+                $('#webcamBadge').text('SCAN ERROR').addClass('fake');
+                addRollingLog({ prediction: 'ERROR', confidence: 0, scan_id: 'N/A' });
+            },
+            complete: function() {
+                webcamRequestInFlight = false;
             }
         });
     }
@@ -753,7 +790,7 @@ $(document).ready(function () {
         const curRes = data.prediction;
         
         badge.text(curRes);
-        conf.text(`${data.confidence.toFixed(1)}%`);
+        conf.text(`${Number(data.confidence || 0).toFixed(1)}%`);
         
         if (curRes === 'FAKE') {
             badge.addClass('fake');
@@ -781,7 +818,7 @@ $(document).ready(function () {
             <div class="log-entry ${data.prediction.toLowerCase()}">
                 <span class="log-time">[${timeStr}]</span>
                 <span class="log-id">${data.scan_id}</span>
-                <span class="log-res">${data.prediction} (${data.confidence.toFixed(1)}%)</span>
+                <span class="log-res">${data.prediction} (${Number(data.confidence || 0).toFixed(1)}%)</span>
             </div>
         `);
         
@@ -796,4 +833,3 @@ $(document).ready(function () {
     $('#startWebcamBtn').click(startWebcam);
     $('#stopWebcamBtn').click(stopWebcam);
 });
-
